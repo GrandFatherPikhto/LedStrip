@@ -11,7 +11,7 @@ import com.grandfatherpikhto.ledstrip.databinding.FragmentFirstBinding
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
  */
-class FirstFragment : Fragment() {
+class ScanFragment : Fragment() {
 
     private var _binding: FragmentFirstBinding? = null
 
