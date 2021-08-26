@@ -9,6 +9,7 @@ import android.os.*
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.grandfatherpikhto.ledstrip.helper.LSHelper
+import com.grandfatherpikhto.ledstrip.rvbtdadapter.BtLeDevice
 import java.lang.StringBuilder
 import java.util.*
 

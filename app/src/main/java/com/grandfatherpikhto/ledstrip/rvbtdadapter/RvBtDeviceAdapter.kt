@@ -75,7 +75,7 @@ class RvBtDeviceAdapter : RecyclerView.Adapter<RvBtDeviceAdapter.RvBtDeviceHolde
     }
 
     /** Очистить список с обновлением отображения */
-    public fun clearBtDevices() {
+    fun clearBtDevices() {
         devices.clear()
         notifyDataSetChanged()
     }

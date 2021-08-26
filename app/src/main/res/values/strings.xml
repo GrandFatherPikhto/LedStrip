@@ -16,4 +16,5 @@
     <string name="rbRegimeAll">All</string>
     <string name="rbRegimeRun">Run</string>
     <string name="rbRegimeOff">Off</string>
+    <string name="itemEnableLedStrip">Enable Led Strip</string>
 </resources>

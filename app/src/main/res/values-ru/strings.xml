@@ -15,4 +15,5 @@
     <string name="rbRegimeAll">Все</string>
     <string name="rbRegimeRun">Бег</string>
     <string name="rbRegimeOff">Выключить</string>
+    <string name="itemEnableLedStrip">Включить</string>
 </resources>
