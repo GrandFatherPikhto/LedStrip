@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LedStrip</string>
+    <string name="action_settings">Настройки</string>
+    <string name="scan_fragment_label">Список устройств</string>
+    <string name="ledstrip_fragment_label">Управление Устройством</string>
+    <string name="next">Дальше</string>
+    <string name="previous">Назад</string>
+    <string name="default_bt_device_name">Неизвестное устройство</string>
+    <string name="paired_bluetooth">Сопряжённое устройство</string>
+    <string name="unpaired_bluetooth">Не сопряжённое устройство</string>
+    <string name="itemScanBtDevices">Сканировать</string>
+    <string name="itemPairedBtDevices">Сопряжённые</string>
+    <string name="itemBtDevicesList">Список Устройств</string>
+    <string name="rbRegimeAll">Все</string>
+    <string name="rbRegimeRun">Бег</string>
+    <string name="rbRegimeOff">Выключить</string>
+</resources>

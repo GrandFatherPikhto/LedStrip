@@ -7,4 +7,9 @@
         android:orderInCategory="100"
         android:title="@string/action_settings"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/itemScanBtDevices"
+        android:icon="@drawable/ic_baseline_search_24"
+        android:title="@string/itemScanBtDevices"
+        app:showAsAction="ifRoom" />
 </menu>
