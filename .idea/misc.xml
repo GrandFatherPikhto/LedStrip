@@ -3,6 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable/bluetooth_not_paired_48.xml" value="0.2140625" />
+        <entry key="app/src/main/res/drawable/bluetooth_paired_24.xml" value="0.2140625" />
+        <entry key="app/src/main/res/drawable/bluetooth_paired_48.xml" value="0.2140625" />
         <entry key="app/src/main/res/layout/bt_device_layout.xml" value="0.19791666666666666" />
         <entry key="app/src/main/res/layout/content_main.xml" value="0.19791666666666666" />
         <entry key="app/src/main/res/layout/fragment_ledstrip.xml" value="0.19791666666666666" />
