@@ -50,7 +50,7 @@ class ScanFragment : Fragment() {
                 BluetoothLeService.ACTION_DEVICE_SCAN_STOP -> {
                     Log.d(TAG, "Scan Stop")
                 }
-                BluetoothLeService.ACTION_DEVICE_SCAN -> {
+                BluetoothLeService.ACTION_DEVICE_SCAN_FIND -> {
                     val btDeviceAddress = intent.getStringExtra(AppConst.btAddress)
                     val btDeviceName    = intent.getStringExtra(AppConst.btName)
                     val btBound         = intent.getIntExtra(AppConst.btBound, -1)
@@ -124,6 +124,7 @@ class ScanFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        doUnbindBluetoothLeService()
         _binding = null
     }
 
@@ -204,10 +205,10 @@ class ScanFragment : Fragment() {
 
     private fun makeIntentFilter(): IntentFilter {
         val intentFilter = IntentFilter()
-        intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_SCAN)
         intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_SCAN_STOP)
         intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_SCAN_START)
-        intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_BATCH_SCAN)
+        intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_SCAN_FIND)
+        intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_SCAN_BATCH_FIND)
         return intentFilter
     }
 }

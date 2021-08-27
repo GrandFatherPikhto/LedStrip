@@ -32,10 +32,10 @@ class BluetoothLeService: Service() {
         const val ACTION_GATT_DISCOVERED:String = "com.rqd.testgatt.ble.STATE_DISCOVERED"
         const val ACTION_GATT_UNKNOWN:String = "com.rqd.testgatt.ble.STATE_UNKNOWN"
         const val ACTION_DATA_AVAILABLE:String = "com.rqd.ble.ACTION_DATA_AVAILABLE"
-        const val ACTION_DEVICE_SCAN:String ="com.rqd.ble.ACTION_DEVICE_SCAN"
+        const val ACTION_DEVICE_SCAN_FIND:String ="com.rqd.ble.ACTION_DEVICE_SCAN"
         const val ACTION_DEVICE_SCAN_START:String="com.rqd.ble.ACTION_DEVICE_SCAN_START"
         const val ACTION_DEVICE_SCAN_STOP:String="com.rqd.ble.ACTION_DEVICE_SCAN_STOP"
-        const val ACTION_DEVICE_BATCH_SCAN:String ="com.rqd.ble.ACTION_DEVICE_BATCH_SCAN"
+        const val ACTION_DEVICE_SCAN_BATCH_FIND:String ="com.rqd.ble.ACTION_DEVICE_BATCH_SCAN"
 
         const val EXTRA_DATA:String = "com.rqd.ble.EXTRA_DATA"
         const val REGIME_DATA:String = "com.rqd.ble.REGIME_DATA"
@@ -113,11 +113,9 @@ class BluetoothLeService: Service() {
          * о том, что найдено устройство
          */
         fun addBtDevice(bluetoothDevice: BluetoothDevice) {
-            if (bluetoothLeDevices != null) {
-                if(!bluetoothLeDevices!!.contains(bluetoothDevice)) {
-                    bluetoothLeDevices?.add(bluetoothDevice)
-                    broadcastFindDevice(bluetoothDevice)
-                }
+            if(!bluetoothLeDevices.contains(bluetoothDevice)) {
+                bluetoothLeDevices.add(bluetoothDevice)
+                broadcastFindDevice(bluetoothDevice)
             }
         }
 
@@ -334,7 +332,7 @@ class BluetoothLeService: Service() {
      *
      */
     private fun broadcastFindDevice(bluetoothLeDevice: BluetoothDevice) {
-        val intent = Intent(ACTION_DEVICE_SCAN)
+        val intent = Intent(ACTION_DEVICE_SCAN_FIND)
         intent.putExtra(AppConst.btAddress, bluetoothLeDevice.address)
         intent.putExtra(AppConst.btName, bluetoothLeDevice.name)
         intent.putExtra(AppConst.btBound, bluetoothLeDevice.bondState)
@@ -417,7 +415,6 @@ class BluetoothLeService: Service() {
         Log.d(TAG, "Подключаемся к $address")
         if(
             !::bluetoothAdapter.isInitialized
-            || address == null
             || address.isBlank()) {
             Log.e(TAG, "Адаптер Блютуз не инициализирован или не задан адрес подключения")
             return false
@@ -425,7 +422,7 @@ class BluetoothLeService: Service() {
 
         if(
             ::bluetoothDeviceAddress.isInitialized
-            && address.equals(bluetoothDeviceAddress)
+            && address == bluetoothDeviceAddress
             && bluetoothGatt != null) {
             Log.w(TAG, "Пробую использовать существующий bluetoothGATT для подключения")
             return if(bluetoothGatt!!.connect()) {
@@ -445,31 +442,26 @@ class BluetoothLeService: Service() {
                 bluetoothDevice.createBond()
             }
 
-            if(bluetoothDevice == null) {
-                Log.w(TAG, "Устройство $address не найдено. Не могу подключиться")
-                return false
-            } else {
-                Log.w(TAG, "Обнаружено стройство $address")
-                Handler(Looper.getMainLooper()).postDelayed({
-                    if(bluetoothDevice.type == BluetoothDevice.DEVICE_TYPE_UNKNOWN) {
-                        bluetoothGatt = bluetoothDevice.connectGatt(
-                            baseContext
-                            , false
-                            , bluetoothGattCallback
-                            , BluetoothDevice.TRANSPORT_LE)
-                    } else {
-                        bluetoothGatt = bluetoothDevice.connectGatt(
-                            baseContext
-                            , true
-                            , bluetoothGattCallback
-                            , BluetoothDevice.TRANSPORT_LE)
-                    }
-                    Log.d(TAG, "Пробую создать новое подключение / Ответ должен прийти асинхронно в широковещательном событии")
-                    bluetoothDeviceAddress = address
-                    connectionState = STATE_CONNECTING
-                    // broadcastUpdate(ACTION_GATT_DISCOVERED)
-                }, 1000)
-            }
+            Log.w(TAG, "Обнаружено стройство $address")
+            Handler(Looper.getMainLooper()).postDelayed({
+                if(bluetoothDevice.type == BluetoothDevice.DEVICE_TYPE_UNKNOWN) {
+                    bluetoothGatt = bluetoothDevice.connectGatt(
+                        baseContext
+                        , false
+                        , bluetoothGattCallback
+                        , BluetoothDevice.TRANSPORT_LE)
+                } else {
+                    bluetoothGatt = bluetoothDevice.connectGatt(
+                        baseContext
+                        , true
+                        , bluetoothGattCallback
+                        , BluetoothDevice.TRANSPORT_LE)
+                }
+                Log.d(TAG, "Пробую создать новое подключение / Ответ должен прийти асинхронно в широковещательном событии")
+                bluetoothDeviceAddress = address
+                connectionState = STATE_CONNECTING
+                // broadcastUpdate(ACTION_GATT_DISCOVERED)
+            }, 1000)
         } else {
             Log.e(TAG, "Адаптер не инициализирован, или нет соответствующих разрешений. Не могу подключиться")
             return false
@@ -648,7 +640,7 @@ class BluetoothLeService: Service() {
         }
 
         val next = queueWrite.poll()
-        when(next.first) {
+        when(next?.first) {
             CHAR_COLOR -> {
                 writeCharacteristic(charColor, next.second)
             }
@@ -698,7 +690,7 @@ class BluetoothLeService: Service() {
         broadcastUpdate(ACTION_DEVICE_SCAN_START)
         val filterUUID = UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB")
         Log.d(TAG, "Запуск сканирования $filterUUID")
-        bluetoothLeDevices?.clear()
+        bluetoothLeDevices.clear()
 
         val scanSettings: ScanSettings = ScanSettings.Builder()
             // .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
