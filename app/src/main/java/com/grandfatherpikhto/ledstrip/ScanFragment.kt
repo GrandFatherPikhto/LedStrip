@@ -10,7 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.grandfatherpikhto.ledstrip.databinding.FragmentScanBinding
-import com.grandfatherpikhto.ledstrip.helper.LSHelper
+import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.rvbtdadapter.BtLeDevice
 import com.grandfatherpikhto.ledstrip.rvbtdadapter.RvBtDeviceAdapter
 import com.grandfatherpikhto.ledstrip.rvbtdadapter.RvBtDeviceCallback
@@ -51,9 +51,9 @@ class ScanFragment : Fragment() {
                     Log.d(TAG, "Scan Stop")
                 }
                 BluetoothLeService.ACTION_DEVICE_SCAN -> {
-                    val btDeviceAddress = intent.getStringExtra(LSHelper.btAddress)
-                    val btDeviceName    = intent.getStringExtra(LSHelper.btName)
-                    val btBound         = intent.getIntExtra(LSHelper.btBound, -1)
+                    val btDeviceAddress = intent.getStringExtra(AppConst.btAddress)
+                    val btDeviceName    = intent.getStringExtra(AppConst.btName)
+                    val btBound         = intent.getIntExtra(AppConst.btBound, -1)
 
                     if(btDeviceName != null && btDeviceAddress != null) {
                         val btDevice = BtLeDevice(
@@ -140,8 +140,8 @@ class ScanFragment : Fragment() {
     private fun connectToDevice(bluetoothDevice: BtLeDevice) {
         Log.d(TAG, "Подключиться к устройству ${bluetoothDevice.name}")
         val editor: SharedPreferences.Editor = preferences.edit()
-        editor.putString(LSHelper.btName, bluetoothDevice.name)
-        editor.putString(LSHelper.btAddress, bluetoothDevice.address)
+        editor.putString(AppConst.btName, bluetoothDevice.name)
+        editor.putString(AppConst.btAddress, bluetoothDevice.address)
         editor.apply()
 
         findNavController().navigate(R.id.action_ScanFragment_to_LedstripFragment)
@@ -171,7 +171,7 @@ class ScanFragment : Fragment() {
     }
 
     private fun loadPreferences() {
-        preferences = context?.getSharedPreferences(LSHelper.btPrefs, Context.MODE_PRIVATE)!!
+        preferences = context?.getSharedPreferences(AppConst.btPrefs, Context.MODE_PRIVATE)!!
     }
 
     /**

@@ -17,9 +17,12 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.grandfatherpikhto.ledstrip.databinding.ActivityMainBinding
-import com.grandfatherpikhto.ledstrip.helper.LSHelper
+import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.service.BluetoothLeService
 
 class MainActivity : AppCompatActivity() {
@@ -237,9 +240,9 @@ class MainActivity : AppCompatActivity() {
      * Загрузить сохранённые данные
      */
     private fun loadPreferences() {
-        preferences     = getSharedPreferences(LSHelper.btPrefs, Context.MODE_PRIVATE)!!
-        btDeviceAddress = preferences?.getString(LSHelper.btAddress, getString(R.string.default_bt_device_address))!!
-        btDeviceName    = preferences?.getString(LSHelper.btName, getString(R.string.default_bt_device_name))!!
+        preferences     = getSharedPreferences(AppConst.btPrefs, Context.MODE_PRIVATE)!!
+        btDeviceAddress = preferences.getString(AppConst.btAddress, getString(R.string.default_bt_device_address))!!
+        btDeviceName    = preferences.getString(AppConst.btName, getString(R.string.default_bt_device_name))!!
     }
 
     /**
@@ -295,5 +298,22 @@ class MainActivity : AppCompatActivity() {
      */
     private fun makeIntentFilter(): IntentFilter {
         return IntentFilter()
+    }
+
+    /**
+     * Find fragment by class
+     *
+     * @param T
+     * @return
+     */
+    private inline fun <reified T: Fragment> FragmentManager.findFragmentByClass(): T? {
+        (fragments.firstOrNull { navHostFragment ->
+            navHostFragment is NavHostFragment
+        } as NavHostFragment)
+            ?.childFragmentManager.fragments.firstNotNullOf { fragment ->
+                if ( fragment is T )  return fragment
+            }
+
+        return  null
     }
 }

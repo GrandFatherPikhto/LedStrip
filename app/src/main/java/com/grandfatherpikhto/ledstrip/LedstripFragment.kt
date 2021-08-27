@@ -11,9 +11,10 @@ import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.grandfatherpikhto.ledstrip.databinding.FragmentLedstripBinding
-import com.grandfatherpikhto.ledstrip.helper.LSHelper
+import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.service.BluetoothLeService
 import top.defaults.colorpicker.ColorPickerView
+import java.lang.StringBuilder
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
@@ -116,13 +117,12 @@ class LedstripFragment : Fragment() {
                         when (it) {
                             BluetoothLeService.REGIME_DATA -> {
                                 regime =
-                                    intent?.getByteArrayExtra(BluetoothLeService.REGIME_DATA)!![0].toInt()
+                                    intent.getByteArrayExtra(BluetoothLeService.REGIME_DATA)!![0].toInt()
                                 initRegime()
                             }
                             BluetoothLeService.COLOR_DATA -> {
-                                val byteArray =
-                                    intent?.getByteArrayExtra(BluetoothLeService.COLOR_DATA)
-                                setColor(byteArray!!)
+                                val color = intent.getIntExtra(BluetoothLeService.COLOR_DATA, -1)
+                                setColor(color)
                             }
                             else -> {
 
@@ -160,8 +160,9 @@ class LedstripFragment : Fragment() {
 
         binding.apply {
             cpViewLeds = colorPickerView
-            colorPickerView?.isEnabled = false
-            cpViewLeds.subscribe { color, fromUser, shouldPropagate ->
+            colorPickerView.isEnabled = false
+            /** Неиспользуемые параметры: "_" */
+            cpViewLeds.subscribe { color, _, _ ->
                 bluetoothLeService?.writeColor(color)
             }
 
@@ -188,14 +189,6 @@ class LedstripFragment : Fragment() {
         doBindBluetoothLeService()
 
         return binding.root
-    }
-
-    /**
-     *
-     */
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        Log.d(ScanFragment.TAG, object{}.javaClass.enclosingMethod.name)
     }
 
     /**
@@ -253,13 +246,13 @@ class LedstripFragment : Fragment() {
      *
      */
     private fun loadPreferences() {
-        preferences = context?.getSharedPreferences(LSHelper.btPrefs, Context.MODE_PRIVATE)!!
-        btDeviceAddress = preferences?.getString(
-            LSHelper.btAddress,
+        preferences = context?.getSharedPreferences(AppConst.btPrefs, Context.MODE_PRIVATE)!!
+        btDeviceAddress = preferences.getString(
+            AppConst.btAddress,
             getString(R.string.default_bt_device_address)
         )!!
-        btDeviceName = preferences?.getString(
-            LSHelper.btName,
+        btDeviceName = preferences.getString(
+            AppConst.btName,
             getString(R.string.default_bt_device_address)
         )!!
     }
@@ -343,10 +336,10 @@ class LedstripFragment : Fragment() {
      * Может быть, лучше сделать лямбду?
      * https://kotlinlang.org/docs/lambdas.html#function-types
      */
-    private fun setColor(byteArray: ByteArray) {
+    private fun setColor(color: Int) {
         view?.findViewById<ColorPickerView>(R.id.colorPickerView).also { ledColorPicker ->
             ledColorPicker?.isEnabled = true
-            ledColorPicker?.setInitialColor(LSHelper.byteArrayToInt(byteArray))
+            ledColorPicker?.setInitialColor(color)
         }
     }
 }

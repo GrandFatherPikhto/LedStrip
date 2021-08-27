@@ -8,7 +8,7 @@ import android.content.Intent
 import android.os.*
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.grandfatherpikhto.ledstrip.helper.LSHelper
+import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.rvbtdadapter.BtLeDevice
 import java.lang.StringBuilder
 import java.util.*
@@ -335,9 +335,9 @@ class BluetoothLeService: Service() {
      */
     private fun broadcastFindDevice(bluetoothLeDevice: BluetoothDevice) {
         val intent = Intent(ACTION_DEVICE_SCAN)
-        intent.putExtra(LSHelper.btAddress, bluetoothLeDevice.address)
-        intent.putExtra(LSHelper.btName, bluetoothLeDevice.name)
-        intent.putExtra(LSHelper.btBound, bluetoothLeDevice.bondState)
+        intent.putExtra(AppConst.btAddress, bluetoothLeDevice.address)
+        intent.putExtra(AppConst.btName, bluetoothLeDevice.name)
+        intent.putExtra(AppConst.btBound, bluetoothLeDevice.bondState)
         sendBroadcast(intent)
     }
 
@@ -350,7 +350,7 @@ class BluetoothLeService: Service() {
             intent.putExtra(REGIME_DATA, bluetoothGattCharacteristic.value)
             sendBroadcast(intent)
         } else if (UUID_SERVICE_CHAR_COLOR == bluetoothGattCharacteristic.uuid) {
-            intent.putExtra(COLOR_DATA, bluetoothGattCharacteristic.value)
+            intent.putExtra(COLOR_DATA, bluetoothGattCharacteristic.value.toInt())
             sendBroadcast(intent)
         }
     }
@@ -482,7 +482,7 @@ class BluetoothLeService: Service() {
      *
      */
     fun writeColor(color: Int) {
-        writeCharColor(LSHelper.intToByteArray(color))
+        writeCharColor(color.toByteArray())
     }
 
     /**
@@ -726,7 +726,7 @@ class BluetoothLeService: Service() {
          */
         Handler(Looper.getMainLooper()).postDelayed({
             stopScan()
-        }, LSHelper.scanPeriod)
+        }, AppConst.scanPeriod)
     }
 
     /**
@@ -768,5 +768,47 @@ class BluetoothLeService: Service() {
         val devicesList = mutableListOf<BtLeDevice>()
         forEach { device -> devicesList.add(BtLeDevice(device.address, device.name ?: "Unknown Device", device.bondState)) }
         return devicesList.toList()
+    }
+
+    /**
+     * Int to byte array
+     *
+     * @param num
+     * @return
+     */
+    private fun Int.toByteArray():ByteArray {
+        val byteArray = ByteArray(Int.SIZE_BYTES)
+        for(i in byteArray.indices) {
+            byteArray[i] = this.shr(i * 8).and(0xFF).toByte()
+        }
+        return byteArray
+    }
+
+    /**
+     * Byte array to int
+     *
+     * @param byteArray
+     * @return
+     */
+    private fun ByteArray.toInt():Int {
+        var result = 0
+        for(i in this.indices) {
+            result = result.or(this[i].toInt().shl(i * 8).and(0xFF.shl(i * 8)))
+        }
+        return result
+    }
+
+    /**
+     * Byte array to hex string
+     *
+     * @param byteArray
+     * @return
+     */
+    fun ByteArray.toHexString(): String {
+        val out = StringBuilder()
+        this.forEach { bt ->
+            out.insert(0, String.format("%02x", bt))
+        }
+        return out.toString()
     }
 }
