@@ -1,4 +1,4 @@
-package com.grandfatherpikhto.ledstrip
+package com.grandfatherpikhto.ledstrip.ui
 
 import android.Manifest
 import android.content.*
@@ -17,11 +17,12 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.ActivityMainBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.service.BluetoothLeService
@@ -40,6 +41,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btDeviceName:String
     /** Адрес уже выбранного устройства */
     private lateinit var btDeviceAddress:String
+    /** */
+    private lateinit var navHost:NavHostFragment
+    private lateinit var navController:NavController
+
 
     /** */
     private var isBound:Boolean = false
@@ -102,11 +107,11 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
 
         loadPreferences()
-        setNavigate()
+        setStartNavigate()
+
         doBindBluetoothLeService()
 
         binding.fab.setOnClickListener { view ->
-            val navController = findNavController(R.id.nav_host_fragment_content_main)
             bluetoothLeService?.scanLeDevices()
             when(navController.currentDestination?.id) {
                 R.id.LedstripFragment -> {
@@ -144,7 +149,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     *
+     * Обработка событий меню. Если вернуть false,
+     * обработка будет передана дальше. Например,
+     * если выберем отображение списка устройств,
+     * во фрагменте ScanFragment клик по этому
+     * меню будет тоже обработан.
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // Handle action bar item clicks here. The action bar will
@@ -152,15 +161,13 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.itemOptions -> {
-                // navigateTo(R.id.OptionsFragment)
-                navigateTo(R.id.action_LedstripFragment_to_OptionsFragment)
+                navController?.navigate(R.id.OptionsFragment)
                 return true
             }
             R.id.itemScanBtDevices -> {
-                Log.d(TAG, "Запуск сканирования устройств")
-                navigateTo(R.id.ScanFragment)
-                bluetoothLeService?.scanLeDevices()
-                return true
+                Log.d(TAG, "Открыть список устройств")
+                navController?.navigate(R.id.ScanFragment)
+                return false
             }
             else -> super.onOptionsItemSelected(item)
         }
@@ -254,34 +261,17 @@ class MainActivity : AppCompatActivity() {
      * Если MAC-адрес установлен, переходим к фрагменту управления устройством,
      * если нет, сканируем устройства
      */
-    private fun setNavigate() {
-        val navHost         = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        val navController   = navHost?.findNavController()
-        if(navController != null) {
-            val graph = navController.navInflater.inflate(R.navigation.nav_graph)
-            if(::btDeviceAddress.isInitialized && btDeviceAddress != getString(R.string.default_bt_device_address)) {
-                graph.startDestination = R.id.LedstripFragment
-            } else {
-                graph.startDestination = R.id.ScanFragment
-            }
-            navController.graph    = graph
-            appBarConfiguration    = AppBarConfiguration(graph)
-            setupActionBarWithNavController(navController!!, appBarConfiguration)
-        }
-    }
+    private fun setStartNavigate() {
+        navHost         = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
+        navController   = navHost!!.findNavController()
+        appBarConfiguration = AppBarConfiguration(navController.graph)
+        setupActionBarWithNavController(navController, appBarConfiguration)
 
-    /**
-     *
-     */
-    private fun navigateTo(id:Int) {
-        val navHost         = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        val navController   = navHost?.findNavController()
-        navController?.navigate(id)
-        val graph = navController?.navInflater?.inflate(R.navigation.nav_graph)
-        if(graph != null) {
-            appBarConfiguration    = AppBarConfiguration(graph)
-            setupActionBarWithNavController(navController, appBarConfiguration)
-        }
+//        if(::btDeviceAddress.isInitialized && btDeviceAddress != getString(R.string.default_bt_device_address)) {
+//            navController.navigate(R.id.LedstripFragment)
+//        } else {
+//            navController.navigate(R.id.ScanFragment)
+//        }
     }
 
     /**

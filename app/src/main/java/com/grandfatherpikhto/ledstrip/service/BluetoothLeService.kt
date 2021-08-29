@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.*
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.rvbtdadapter.BtLeDevice
 import java.lang.StringBuilder
@@ -512,29 +513,30 @@ class BluetoothLeService: Service() {
         if(::bluetoothAdapter.isInitialized) {
             val bluetoothDevice: BluetoothDevice = bluetoothAdapter.getRemoteDevice(address)
             /** Если устройство не сопряжено, сопрячь */
-            if(bluetoothDevice.bondState == BluetoothDevice.BOND_NONE) {
-                bluetoothDevice.createBond()
-            }
+            // if(bluetoothDevice.bondState == BluetoothDevice.BOND_NONE) {
+            //    bluetoothDevice.createBond()
+            //}
 
             Log.w(TAG, "Обнаружено стройство $address")
             Handler(Looper.getMainLooper()).postDelayed({
                 if(bluetoothDevice.type == BluetoothDevice.DEVICE_TYPE_UNKNOWN) {
                     bluetoothGatt = bluetoothDevice.connectGatt(
                         baseContext
-                        , false
+                        , true
                         , bluetoothGattCallback
                         , BluetoothDevice.TRANSPORT_LE)
+                    Log.d(TAG, "Устройство не закэшировано")
                 } else {
                     bluetoothGatt = bluetoothDevice.connectGatt(
                         baseContext
-                        , false
+                        , true
                         , bluetoothGattCallback
                         , BluetoothDevice.TRANSPORT_LE)
+                    Log.d(TAG, "Устройство закэшировано")
                 }
                 Log.d(TAG, "Пробую создать новое подключение / Ответ должен прийти асинхронно в широковещательном событии")
                 bluetoothDeviceAddress = address
                 connectionState = STATE_CONNECTING
-                // broadcastUpdate(ACTION_GATT_DISCOVERED)
             }, 1000)
         } else {
             Log.e(TAG, "Адаптер не инициализирован, или нет соответствующих разрешений. Не могу подключиться")
@@ -689,6 +691,7 @@ class BluetoothLeService: Service() {
     fun scanLeDevices() {
         if(isScan) {
             stopScan()
+            startScan()
         } else {
             startScan()
         }
@@ -697,8 +700,7 @@ class BluetoothLeService: Service() {
     /**
      * Запуск процесса сканирования
      */
-    private fun startScan() {
-        stopScan()
+    fun startScan() {
         broadcastUpdate(ACTION_DEVICE_SCAN_START)
         val filterUUID = UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB")
         Log.d(TAG, "Запуск сканирования $filterUUID")
@@ -737,13 +739,11 @@ class BluetoothLeService: Service() {
      * Остановка процесса сканирования
      * Забыл, зачем я тут задержку выставил?
      */
-    private fun stopScan() {
-        if(isScan) {
-            isScan = false
-            broadcastUpdate(ACTION_DEVICE_SCAN_STOP)
-            bluetoothLeScanner.stopScan(leScanCallback)
-            Log.d(TAG, "Сканирование остановлено")
-        }
+    fun stopScan() {
+        isScan = false
+        broadcastUpdate(ACTION_DEVICE_SCAN_STOP)
+        bluetoothLeScanner.stopScan(leScanCallback)
+        Log.d(TAG, "Сканирование окончено")
     }
 
     /**
@@ -751,7 +751,8 @@ class BluetoothLeService: Service() {
      * в более простой BtLeDevice
      */
     fun MutableList<BtLeDevice>.add(bluetoothLeDevice: BluetoothDevice) {
-        this.add(BtLeDevice(bluetoothLeDevice.address, bluetoothLeDevice.name ?: "Unknown Device", bluetoothLeDevice.bondState))
+        this.add(BtLeDevice(bluetoothLeDevice.address, bluetoothLeDevice.name ?: applicationContext.getString(
+            R.string.default_bt_device_name), bluetoothLeDevice.bondState))
     }
 
     /**
@@ -760,7 +761,7 @@ class BluetoothLeService: Service() {
      */
     fun MutableList<BtLeDevice>.contains(bluetoothLeDevice: BluetoothDevice): Boolean {
         this.forEach { btLeDevice ->
-            if (btLeDevice.address == bluetoothLeDevice.address) {
+            if (btLeDevice.address == bluetoothLeDevice.address.toString()) {
                 return true
             }
         }

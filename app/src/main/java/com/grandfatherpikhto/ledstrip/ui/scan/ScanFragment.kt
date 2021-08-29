@@ -1,4 +1,4 @@
-package com.grandfatherpikhto.ledstrip
+package com.grandfatherpikhto.ledstrip.ui.scan
 
 import android.content.*
 import android.os.Bundle
@@ -9,6 +9,8 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.grandfatherpikhto.ledstrip.ui.MainActivity
+import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.FragmentScanBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.rvbtdadapter.BtLeDevice
@@ -46,25 +48,19 @@ class ScanFragment : Fragment() {
             when (intent?.action!!) {
                 BluetoothLeService.ACTION_DEVICE_SCAN_START -> {
                     rvBtDeviceAdapter.clearBtDevices()
+                    Log.d("SCAN_START", "Начато сканирование")
                 }
                 BluetoothLeService.ACTION_DEVICE_SCAN_STOP -> {
-                    Log.d(TAG, "Scan Stop")
+                    Log.d("SCAN_STOP", "Сканирование остановлено")
                 }
                 BluetoothLeService.ACTION_DEVICE_SCAN_FIND -> {
-                    val btDeviceAddress = intent.getStringExtra(AppConst.btAddress)
-                    val btDeviceName    = intent.getStringExtra(AppConst.btName)
-                    val btBound         = intent.getIntExtra(AppConst.btBound, -1)
-
-                    if(btDeviceName != null && btDeviceAddress != null) {
-                        val btDevice = BtLeDevice(
-                            btDeviceAddress,
-                            btDeviceName,
-                            btBound
-                        )
-                        rvBtDeviceAdapter.addBtDevice(btDevice)
-                    }
-
-                    Log.d(TAG, "Find Device")
+                    val btDevice = BtLeDevice(
+                        intent.getStringExtra(AppConst.btAddress) ?: context!!.getString(R.string.default_bt_device_address),
+                        intent.getStringExtra(AppConst.btName) ?: context!!.getString(R.string.default_bt_device_name),
+                        intent.getIntExtra(AppConst.btBound, -1)
+                    )
+                    Log.d("SCAN_FIND", "Найдено устройство $btDevice")
+                    rvBtDeviceAdapter.addBtDevice(btDevice)
                 }
             }
         }
@@ -76,7 +72,13 @@ class ScanFragment : Fragment() {
             val binder = service as BluetoothLeService.LocalLeServiceBinder
             bluetoothLeService = binder.getService()
             if(bluetoothLeService != null) {
-                rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.devices)
+                if(bluetoothLeService!!.state != BluetoothLeService.STATE_SCANNING) {
+                    rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.devices)
+                    Log.d(TAG, "Устанавливаем список уже найденных устройств")
+                } else {
+                    rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.getPairedDevices())
+                    Log.d(TAG, "Устанавливаем список сопряжённых устройств")
+                }
                 Log.e(MainActivity.TAG, "service Connected")
             }
         }
@@ -98,9 +100,9 @@ class ScanFragment : Fragment() {
         /**
          * Включить обработку кликов меню
          */
-        bindRvBtDevices()
-        loadPreferences()
         setHasOptionsMenu(true)
+        loadPreferences()
+        bindRvBtDevices()
         doBindBluetoothLeService()
 
         return binding.root
@@ -112,10 +114,17 @@ class ScanFragment : Fragment() {
         inflater.inflate(R.menu.menu_scan, menu)
     }
 
+    /**
+     * Обработка событий меню
+     */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when(item.itemId) {
             R.id.itemPairedBtDevices -> {
                 rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.getPairedDevices())
+                return true
+            }
+            R.id.itemScanBtDevices -> {
+                bluetoothLeService?.scanLeDevices()
                 return true
             }
             else -> super.onOptionsItemSelected(item)
@@ -129,23 +138,31 @@ class ScanFragment : Fragment() {
     }
 
     override fun onPause() {
-        doUnbindBluetoothLeService()
+        requireContext().unregisterReceiver(broadcastReceiver)
         super.onPause()
     }
 
     override fun onResume() {
-        doBindBluetoothLeService()
+        requireContext().registerReceiver(broadcastReceiver, makeIntentFilter())
         super.onResume()
     }
 
     private fun connectToDevice(bluetoothDevice: BtLeDevice) {
-        Log.d(TAG, "Подключиться к устройству ${bluetoothDevice.name}")
+        Log.d(TAG, "Подключаемся к устройству ${bluetoothDevice.name}")
+        if(bluetoothLeService?.state == BluetoothLeService.STATE_SCANNING) {
+            bluetoothLeService?.stopScan()
+        }
+
         val editor: SharedPreferences.Editor = preferences.edit()
         editor.putString(AppConst.btName, bluetoothDevice.name)
         editor.putString(AppConst.btAddress, bluetoothDevice.address)
         editor.apply()
 
-        findNavController().navigate(R.id.ScanFragment)
+        if(bluetoothLeService?.state == BluetoothLeService.STATE_SCANNING) {
+            bluetoothLeService?.stopScan()
+        }
+
+        findNavController().navigate(R.id.action_ScanFragment_to_LedstripFragment)
     }
 
     private fun bindRvBtDevices() {
@@ -168,10 +185,6 @@ class ScanFragment : Fragment() {
 
             rvBtDevices.layoutManager = LinearLayoutManager(context)
             rvBtDevices.adapter       = rvBtDeviceAdapter
-
-            if(bluetoothLeService != null) {
-                rvBtDeviceAdapter.setBtDevices(bluetoothLeService!!.getPairedDevices().toSet())
-            }
         }
     }
 

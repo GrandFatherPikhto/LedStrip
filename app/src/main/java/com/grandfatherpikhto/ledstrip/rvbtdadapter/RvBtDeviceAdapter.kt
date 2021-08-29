@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.grandfatherpikhto.ledstrip.R
-import com.grandfatherpikhto.ledstrip.databinding.BtDeviceLayoutBinding
+import com.grandfatherpikhto.ledstrip.databinding.BtDeviceBinding
 
 class RvBtDeviceAdapter : RecyclerView.Adapter<RvBtDeviceAdapter.RvBtDeviceHolder>(){
     /** Список устройств */
@@ -17,7 +17,7 @@ class RvBtDeviceAdapter : RecyclerView.Adapter<RvBtDeviceAdapter.RvBtDeviceHolde
     /** Холдер для лэйаута устройства */
     class RvBtDeviceHolder(item: View): RecyclerView.ViewHolder(item) {
         /** Привязка к элементам лэйаута устройства */
-        private val binding = BtDeviceLayoutBinding.bind(item)
+        private val binding = BtDeviceBinding.bind(item)
 
         fun bind(btDevice: BtLeDevice) {
             with(binding) {
@@ -40,7 +40,7 @@ class RvBtDeviceAdapter : RecyclerView.Adapter<RvBtDeviceAdapter.RvBtDeviceHolde
 
     /** Создаём очередной элемент лэйаута холдера. Операция ресурсоёмкая */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RvBtDeviceHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.bt_device_layout, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.bt_device, parent, false)
         return RvBtDeviceHolder(view)
     }
 

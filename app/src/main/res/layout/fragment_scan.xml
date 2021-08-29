@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ScanFragment">
+    tools:context=".ui.scan.ScanFragment">
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvBtDevices"
         android:layout_width="0dp"

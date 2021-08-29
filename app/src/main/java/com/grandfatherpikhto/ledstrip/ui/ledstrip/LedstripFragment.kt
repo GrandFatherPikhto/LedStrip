@@ -1,4 +1,4 @@
-package com.grandfatherpikhto.ledstrip
+package com.grandfatherpikhto.ledstrip.ui.ledstrip
 
 import android.content.*
 import android.os.Build
@@ -10,6 +10,7 @@ import android.widget.RadioButton
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.FragmentLedstripBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.service.BluetoothLeService
