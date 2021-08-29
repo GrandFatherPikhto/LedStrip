@@ -14,7 +14,6 @@ import com.grandfatherpikhto.ledstrip.databinding.FragmentLedstripBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.service.BluetoothLeService
 import top.defaults.colorpicker.ColorPickerView
-import java.lang.StringBuilder
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
@@ -22,7 +21,7 @@ import java.lang.StringBuilder
 class LedstripFragment : Fragment() {
     /** */
     companion object {
-        const val TAG: String = "DeviceFragment"
+        const val TAG: String = "LedstripFragment"
         const val showLog = true
         const val regimeOff = 0
         const val regimeAll = 1
@@ -48,7 +47,7 @@ class LedstripFragment : Fragment() {
     private var bluetoothLeService: BluetoothLeService? = null
 
     /** */
-    private var isBound: Boolean = false
+    private var isBond: Boolean = false
 
     /** */
     private lateinit var cpViewLeds: ColorPickerView
@@ -65,9 +64,11 @@ class LedstripFragment : Fragment() {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as BluetoothLeService.LocalLeServiceBinder
             bluetoothLeService = binder.getService()
+
             if (showLog) {
                 Log.d(TAG, "Связь $name с устройством $btDeviceAddress установлена")
             }
+
             if (btDeviceAddress != context!!.getString(R.string.default_bt_device_address)) {
                 bluetoothLeService!!.connect(btDeviceAddress)
             }
@@ -94,7 +95,7 @@ class LedstripFragment : Fragment() {
          */
         override fun onNullBinding(name: ComponentName?) {
             super.onNullBinding(name)
-            Log.d(TAG, "Нулевой биндинг $name")
+            Log.e(TAG, "Нулевой биндинг $name")
         }
     }
 
@@ -137,7 +138,12 @@ class LedstripFragment : Fragment() {
                     if (::cpViewLeds.isInitialized) {
                         cpViewLeds.isEnabled = false
                     }
+
+                    view?.findViewById<RadioButton>(R.id.rbRegimeOff)?.isEnabled = false
+                    view?.findViewById<RadioButton>(R.id.rbRegimeAll)?.isEnabled = false
+                    view?.findViewById<RadioButton>(R.id.rbRegimeRun)?.isEnabled = false
                 }
+
                 BluetoothLeService.ACTION_GATT_DISCOVERED -> {
                     if (showLog) {
                         Log.d(TAG, "Сервис GATT исследован")
@@ -153,7 +159,7 @@ class LedstripFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
+        Log.d(TAG, "onCreateView")
         _binding = FragmentLedstripBinding.inflate(inflater, container, false)
         setHasOptionsMenu(true)
         loadPreferences()
@@ -213,12 +219,19 @@ class LedstripFragment : Fragment() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        Log.e(TAG, "onStart()")
+    }
+
     /**
-     *
+     * Здесь, не понятно, почему если регистрацию сервиса перенести сюда
+     * то блютуз автоматически выключается. Если оставить его в onStart(),
+     * то автоотключение не происходит
      */
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "Событие OnResume isBound = $isBound")
+        Log.e(TAG, "onResume()")
         requireContext().registerReceiver(broadcastReceiver, makeIntentFilter())
     }
 
@@ -228,7 +241,7 @@ class LedstripFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         requireContext().unregisterReceiver(broadcastReceiver)
-        Log.d(TAG, "Событие OnPause() isBound = $isBound")
+        Log.e(TAG, "Событие OnPause()")
     }
 
     /**
@@ -236,7 +249,7 @@ class LedstripFragment : Fragment() {
      */
     override fun onDestroyView() {
         super.onDestroyView()
-        Log.d(TAG, "onDestroyView")
+        Log.e(TAG, "onDestroyView()")
         bluetoothLeService?.close()
         doUnbindBluetoothLeService()
         _binding = null
@@ -275,14 +288,17 @@ class LedstripFragment : Fragment() {
      * Привязывание сервиса
      */
     private fun doBindBluetoothLeService() {
-        if (!isBound) {
+        if (!isBond) {
             Intent(context, BluetoothLeService::class.java).also { intent ->
-                isBound = requireContext().bindService(
+                isBond = requireContext().bindService(
                     intent,
                     serviceBluetoothLeConnection,
                     Context.BIND_AUTO_CREATE
                 )
-                Log.d(TAG, "Привязка сервиса serviceBluetoothLeConnection")
+                Log.e(
+                        TAG,
+                        "doBindBluetoothService() serviceBluetoothLeConnection isBond=$isBond"
+                    )
             }
             requireContext().registerReceiver(broadcastReceiver, makeIntentFilter())
         }
@@ -292,10 +308,10 @@ class LedstripFragment : Fragment() {
      * Отвязывание сервиса
      */
     private fun doUnbindBluetoothLeService() {
-        Log.d(TAG, "Сервис связан: $isBound")
-        if (isBound) {
+        if (isBond) {
             context?.unbindService(serviceBluetoothLeConnection)
-            isBound = false
+            isBond = false
+            Log.e(TAG, "doUnbindBluetoothLeService: $isBond")
         }
     }
 

@@ -17,4 +17,7 @@
     <string name="rbRegimeRun">Run</string>
     <string name="rbRegimeOff">Off</string>
     <string name="itemEnableLedStrip">Enable Led Strip</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="options_fragment_label">Options</string>
+    <string name="itemOptions">Options</string>
 </resources>

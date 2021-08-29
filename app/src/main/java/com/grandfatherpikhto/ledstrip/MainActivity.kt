@@ -17,6 +17,7 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.navigation.fragment.NavHostFragment
@@ -61,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as BluetoothLeService.LocalLeServiceBinder
             bluetoothLeService = binder.getService()
-            Log.e(TAG, "Сервис подключён $name")
+            Log.d(TAG, "Сервис подключён ${name.toString()}")
         }
 
         /**
@@ -69,7 +70,7 @@ class MainActivity : AppCompatActivity() {
          */
         override fun onServiceDisconnected(name: ComponentName?) {
             bluetoothLeService = null
-            Log.e(TAG, "Сервис отключён $name")
+            Log.d(TAG, "Сервис отключён ${name.toString()}")
         }
 
         /**
@@ -77,7 +78,7 @@ class MainActivity : AppCompatActivity() {
          */
         override fun onBindingDied(name: ComponentName?) {
             super.onBindingDied(name)
-            Log.d(TAG, "Привязка пала $name")
+            Log.d(TAG, "Привязка пала ${name.toString()}")
         }
 
         /**
@@ -87,7 +88,6 @@ class MainActivity : AppCompatActivity() {
             super.onNullBinding(name)
             Log.d(TAG, "Нулевой биндинг $name")
         }
-
     }
 
     /**
@@ -151,9 +151,14 @@ class MainActivity : AppCompatActivity() {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.action_settings -> true
+            R.id.itemOptions -> {
+                // navigateTo(R.id.OptionsFragment)
+                navigateTo(R.id.action_LedstripFragment_to_OptionsFragment)
+                return true
+            }
             R.id.itemScanBtDevices -> {
                 Log.d(TAG, "Запуск сканирования устройств")
+                navigateTo(R.id.ScanFragment)
                 bluetoothLeService?.scanLeDevices()
                 return true
             }
@@ -266,20 +271,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     *
+     */
+    private fun navigateTo(id:Int) {
+        val navHost         = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        val navController   = navHost?.findNavController()
+        navController?.navigate(id)
+        val graph = navController?.navInflater?.inflate(R.navigation.nav_graph)
+        if(graph != null) {
+            appBarConfiguration    = AppBarConfiguration(graph)
+            setupActionBarWithNavController(navController, appBarConfiguration)
+        }
+    }
+
+    /**
      * Привязывание сервиса
      */
     private fun doBindBluetoothLeService() {
-        if (!isBound) {
+        //if (!isBound) {
             Intent(this, BluetoothLeService::class.java).also { intent ->
                 isBound = bindService(
                     intent,
                     serviceBluetoothLeConnection,
                     Context.BIND_AUTO_CREATE
                 )
-                Log.d(TAG, "Привязка сервиса serviceBluetoothLeConnection")
+                Log.d(TAG, "doBindBluetoothLeService() Привязка сервиса serviceBluetoothLeConnection")
             }
             registerReceiver(broadcastReceiver, makeIntentFilter())
-        }
+        //}
     }
 
     /**
@@ -287,10 +306,10 @@ class MainActivity : AppCompatActivity() {
      */
     private fun doUnbindBluetoothLeService() {
         Log.d(TAG, "Сервис связан: $isBound")
-        if (isBound) {
+        //if (isBound) {
             unbindService(serviceBluetoothLeConnection)
             isBound = false
-        }
+        //}
     }
 
     /**

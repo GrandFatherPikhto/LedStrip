@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LedStrip</string>
+    <string name="app_name">Светодиодная Лента</string>
     <string name="action_settings">Настройки</string>
     <string name="scan_fragment_label">Список устройств</string>
     <string name="ledstrip_fragment_label">Управление Устройством</string>
@@ -16,4 +16,6 @@
     <string name="rbRegimeRun">Бег</string>
     <string name="rbRegimeOff">Выключить</string>
     <string name="itemEnableLedStrip">Включить</string>
+    <string name="options_fragment_label">Настройки</string>
+    <string name="itemOptions">Настройки</string>
 </resources>

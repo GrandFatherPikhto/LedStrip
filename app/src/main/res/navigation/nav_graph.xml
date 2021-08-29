@@ -14,6 +14,9 @@
         <action
             android:id="@+id/action_ScanFragment_to_LedstripFragment"
             app:destination="@id/LedstripFragment" />
+        <action
+            android:id="@+id/action_ScanFragment_to_OptionsFragment"
+            app:destination="@id/OptionsFragment" />
     </fragment>
     <fragment
         android:id="@+id/LedstripFragment"
@@ -23,6 +26,21 @@
 
         <action
             android:id="@+id/action_LedstripFragment_to_ScanFragment"
+            app:destination="@id/ScanFragment" />
+        <action
+            android:id="@+id/action_LedstripFragment_to_OptionsFragment"
+            app:destination="@id/OptionsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/OptionsFragment"
+        android:name="com.grandfatherpikhto.ledstrip.OptionsFragment"
+        android:label="fragment_options"
+        tools:layout="@layout/fragment_options" >
+        <action
+            android:id="@+id/action_OptionsFragment_to_LedstripFragment"
+            app:destination="@id/LedstripFragment" />
+        <action
+            android:id="@+id/action_OptionsFragment_to_ScanFragment"
             app:destination="@id/ScanFragment" />
     </fragment>
 </navigation>

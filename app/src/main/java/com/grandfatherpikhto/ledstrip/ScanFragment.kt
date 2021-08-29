@@ -145,7 +145,7 @@ class ScanFragment : Fragment() {
         editor.putString(AppConst.btAddress, bluetoothDevice.address)
         editor.apply()
 
-        findNavController().navigate(R.id.action_ScanFragment_to_LedstripFragment)
+        findNavController().navigate(R.id.ScanFragment)
     }
 
     private fun bindRvBtDevices() {
@@ -168,6 +168,10 @@ class ScanFragment : Fragment() {
 
             rvBtDevices.layoutManager = LinearLayoutManager(context)
             rvBtDevices.adapter       = rvBtDeviceAdapter
+
+            if(bluetoothLeService != null) {
+                rvBtDeviceAdapter.setBtDevices(bluetoothLeService!!.getPairedDevices().toSet())
+            }
         }
     }
 

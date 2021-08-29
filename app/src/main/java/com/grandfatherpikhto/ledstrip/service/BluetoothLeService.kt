@@ -25,21 +25,21 @@ class BluetoothLeService: Service() {
         const val STATE_SCANNING      =  5
         const val STATE_UNKNOWN       = -1
 
-        const val ACTION_GATT_DISCONNECTING:String = "com.rqd.testgatt.ble.STATE_DISCONNECTING"
-        const val ACTION_GATT_DISCONNECTED:String = "com.rqd.testgatt.ble.STATE_DISCONNECTED"
-        const val ACTION_GATT_CONNECTING:String = "com.rqd.testgatt.ble.STATE_CONNECTING"
-        const val ACTION_GATT_CONNECTED:String = "com.rqd.testgatt.ble.STATE_CONNECTED"
-        const val ACTION_GATT_DISCOVERED:String = "com.rqd.testgatt.ble.STATE_DISCOVERED"
-        const val ACTION_GATT_UNKNOWN:String = "com.rqd.testgatt.ble.STATE_UNKNOWN"
-        const val ACTION_DATA_AVAILABLE:String = "com.rqd.ble.ACTION_DATA_AVAILABLE"
-        const val ACTION_DEVICE_SCAN_FIND:String ="com.rqd.ble.ACTION_DEVICE_SCAN"
-        const val ACTION_DEVICE_SCAN_START:String="com.rqd.ble.ACTION_DEVICE_SCAN_START"
-        const val ACTION_DEVICE_SCAN_STOP:String="com.rqd.ble.ACTION_DEVICE_SCAN_STOP"
-        const val ACTION_DEVICE_SCAN_BATCH_FIND:String ="com.rqd.ble.ACTION_DEVICE_BATCH_SCAN"
+        const val ACTION_GATT_DISCONNECTING:String = "com.grandfatherpikhto.service.STATE_DISCONNECTING"
+        const val ACTION_GATT_DISCONNECTED:String = "com.grandfatherpikhto.service.STATE_DISCONNECTED"
+        const val ACTION_GATT_CONNECTING:String = "com.grandfatherpikhto.service.STATE_CONNECTING"
+        const val ACTION_GATT_CONNECTED:String = "com.grandfatherpikhto.service.STATE_CONNECTED"
+        const val ACTION_GATT_DISCOVERED:String = "com.grandfatherpikhto.service.STATE_DISCOVERED"
+        const val ACTION_GATT_UNKNOWN:String = "com.grandfatherpikhto.service.STATE_UNKNOWN"
+        const val ACTION_DATA_AVAILABLE:String = "com.grandfatherpikhto.service.ACTION_DATA_AVAILABLE"
+        const val ACTION_DEVICE_SCAN_FIND:String ="com.grandfatherpikhto.service.ACTION_DEVICE_SCAN"
+        const val ACTION_DEVICE_SCAN_START:String="com.grandfatherpikhto.service.ACTION_DEVICE_SCAN_START"
+        const val ACTION_DEVICE_SCAN_STOP:String="com.grandfatherpikhto.service.ACTION_DEVICE_SCAN_STOP"
+        const val ACTION_DEVICE_SCAN_BATCH_FIND:String ="com.grandfatherpikhto.service.ACTION_DEVICE_BATCH_SCAN"
 
-        const val EXTRA_DATA:String = "com.rqd.ble.EXTRA_DATA"
-        const val REGIME_DATA:String = "com.rqd.ble.REGIME_DATA"
-        const val COLOR_DATA:String = "com.rqd.ble.COLOR_DATA"
+        const val EXTRA_DATA:String = "com.grandfatherpikhto.service.EXTRA_DATA"
+        const val REGIME_DATA:String = "com.grandfatherpikhto.service.REGIME_DATA"
+        const val COLOR_DATA:String = "com.grandfatherpikhto.service.COLOR_DATA"
 
         val UUID_SERVICE_BLINKER: UUID by lazy { UUID.fromString("000000ff-6418-5c4b-a046-0101910b5ad4") }
         val UUID_SERVICE_CHAR_COLOR: UUID by lazy { UUID.fromString("0000ff01-6418-5c4b-a046-0101910b5ad4") }
@@ -166,8 +166,8 @@ class BluetoothLeService: Service() {
                 /** */
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     action = ACTION_GATT_DISCONNECTED
-                    close()
                     Log.d(TAG, "Закрываем сервис")
+                    close()
                     connectionState = STATE_DISCONNECTED
 
                 }
@@ -267,6 +267,7 @@ class BluetoothLeService: Service() {
         /**
          *
          */
+        @RequiresApi(Build.VERSION_CODES.M)
         override fun onCharacteristicWrite(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?,
@@ -398,6 +399,79 @@ class BluetoothLeService: Service() {
         return true
     }
 
+    /**
+     *
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    fun writeColor(color: Int) {
+        writeCharColor(color.toByteArray())
+    }
+
+    /**
+     *
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun writeCharColor(color: ByteArray) {
+        queueWrite.add(Pair(CHAR_COLOR, color))
+        nextWriteQueue()
+    }
+
+
+    /**
+     *
+     */
+    fun readCharColor() {
+        queueRead.add(CHAR_COLOR)
+        nextReadQueue()
+    }
+
+    /**
+     *
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun writeCharRegime(regime: ByteArray) {
+        queueWrite.add(Pair(CHAR_REGIME, regime))
+        nextWriteQueue()
+    }
+
+    /**
+     *
+     */
+    fun readCharRegime() {
+        queueRead.add(CHAR_REGIME)
+        nextReadQueue()
+    }
+
+    /**
+     *
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    fun writeCharRegime(regime: Int) {
+        writeCharRegime(byteArrayOf(regime.toByte()))
+        nextWriteQueue()
+    }
+
+    /**
+     *
+     */
+    private fun logChar(bluetoothGattCharacteristic: BluetoothGattCharacteristic) {
+        val out = StringBuilder()
+        bluetoothGattCharacteristic.value.forEach { bt ->
+            out.append("0x${bt.toUByte().toString(16).uppercase()} ")
+        }
+
+        when (bluetoothGattCharacteristic.uuid) {
+            UUID_SERVICE_CHAR_COLOR -> {
+                Log.d(TAG, "Characteristic Color ${bluetoothGattCharacteristic.uuid}: $out")
+            }
+            UUID_SERVICE_CHAR_REGIME -> {
+                Log.d(TAG, "Characteristic Regime: ${bluetoothGattCharacteristic.uuid}: $out")
+            }
+            else -> {
+                Log.d(TAG, "Unknown characteristic: ${bluetoothGattCharacteristic.uuid}: $out")
+            }
+        }
+    }
 
     /**
      * Подключается к серверу GATT, размещенному на устройстве Bluetooth LE.
@@ -453,7 +527,7 @@ class BluetoothLeService: Service() {
                 } else {
                     bluetoothGatt = bluetoothDevice.connectGatt(
                         baseContext
-                        , true
+                        , false
                         , bluetoothGattCallback
                         , BluetoothDevice.TRANSPORT_LE)
                 }
@@ -470,75 +544,6 @@ class BluetoothLeService: Service() {
         return true
     }
 
-    /**
-     *
-     */
-    fun writeColor(color: Int) {
-        writeCharColor(color.toByteArray())
-    }
-
-    /**
-     *
-     */
-    private fun writeCharColor(color: ByteArray) {
-        queueWrite.add(Pair(CHAR_COLOR, color))
-        nextWriteQueue()
-    }
-
-
-    /**
-     *
-     */
-    fun readCharColor() {
-        queueRead.add(CHAR_COLOR)
-        nextReadQueue()
-    }
-
-    /**
-     *
-     */
-    private fun writeCharRegime(regime: ByteArray) {
-        queueWrite.add(Pair(CHAR_REGIME, regime))
-        nextWriteQueue()
-    }
-
-    /**
-     *
-     */
-    fun readCharRegime() {
-        queueRead.add(CHAR_REGIME)
-        nextReadQueue()
-    }
-
-    /**
-     *
-     */
-    fun writeCharRegime(regime: Int) {
-        writeCharRegime(byteArrayOf(regime.toByte()))
-        nextWriteQueue()
-    }
-
-    /**
-     *
-     */
-    private fun logChar(bluetoothGattCharacteristic: BluetoothGattCharacteristic) {
-        val out = StringBuilder()
-        bluetoothGattCharacteristic.value.forEach { bt ->
-            out.append("0x${bt.toUByte().toString(16).uppercase()} ")
-        }
-
-        when (bluetoothGattCharacteristic.uuid) {
-            UUID_SERVICE_CHAR_COLOR -> {
-                Log.d(TAG, "Characteristic Color ${bluetoothGattCharacteristic.uuid}: $out")
-            }
-            UUID_SERVICE_CHAR_REGIME -> {
-                Log.d(TAG, "Characteristic Regime: ${bluetoothGattCharacteristic.uuid}: $out")
-            }
-            else -> {
-                Log.d(TAG, "Unknown characteristic: ${bluetoothGattCharacteristic.uuid}: $out")
-            }
-        }
-    }
 
     /**
      * Событие асинхронное. Дожидаемся получения сообщения DISCONNECTED
@@ -609,16 +614,21 @@ class BluetoothLeService: Service() {
     /**
      *
      */
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun writeCharacteristic(bluetoothGattCharacteristic: BluetoothGattCharacteristic?, byteArray: ByteArray): Boolean {
-        if(bluetoothGatt != null && bluetoothGattCharacteristic != null) {
-            isWriting = true
-            bluetoothGattCharacteristic.value = byteArray
-            val res = bluetoothGatt!!.writeCharacteristic(bluetoothGattCharacteristic)
+        if(state != STATE_CONNECTED) {
+            if(bluetoothGatt != null && bluetoothGattCharacteristic != null) {
+                isWriting = true
+                bluetoothGattCharacteristic.value = byteArray
+                val res = bluetoothGatt!!.writeCharacteristic(bluetoothGattCharacteristic)
 
-            if(!getNoResponse(bluetoothGattCharacteristic)) {
-                nextWriteQueue()
+                if(!getNoResponse(bluetoothGattCharacteristic)) {
+                    nextWriteQueue()
+                }
+                return res
             }
-            return res
+        } else {
+            this.connect(bluetoothDeviceAddress)
         }
 
         return false
@@ -630,6 +640,7 @@ class BluetoothLeService: Service() {
      * Чтобы запрос повторялся сколько-то раз и если ничего не получилось,
      * сбрасывался бы
      */
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun nextWriteQueue () {
         if(isWriting) {
             return
@@ -687,6 +698,7 @@ class BluetoothLeService: Service() {
      * Запуск процесса сканирования
      */
     private fun startScan() {
+        stopScan()
         broadcastUpdate(ACTION_DEVICE_SCAN_START)
         val filterUUID = UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB")
         Log.d(TAG, "Запуск сканирования $filterUUID")
@@ -726,10 +738,12 @@ class BluetoothLeService: Service() {
      * Забыл, зачем я тут задержку выставил?
      */
     private fun stopScan() {
-        isScan = false
-        broadcastUpdate(ACTION_DEVICE_SCAN_STOP)
-        bluetoothLeScanner.stopScan(leScanCallback)
-        Log.d(TAG, "Сканирование окончено")
+        if(isScan) {
+            isScan = false
+            broadcastUpdate(ACTION_DEVICE_SCAN_STOP)
+            bluetoothLeScanner.stopScan(leScanCallback)
+            Log.d(TAG, "Сканирование остановлено")
+        }
     }
 
     /**
