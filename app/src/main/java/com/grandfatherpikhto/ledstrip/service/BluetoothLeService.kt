@@ -5,12 +5,14 @@ import android.bluetooth.*
 import android.bluetooth.le.*
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.*
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.preference.PreferenceManager
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.helper.AppConst
-import com.grandfatherpikhto.ledstrip.rvbtdadapter.BtLeDevice
+import com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter.BtLeDevice
 import java.lang.StringBuilder
 import java.util.*
 
@@ -73,7 +75,7 @@ class BluetoothLeService: Service() {
     /** */
     private lateinit var bluetoothDeviceAddress: String
     /** */
-    private var connectionState: Int = STATE_DISCONNECTED
+    private var serviceState: Int = STATE_DISCONNECTED
     /** Очередь на чтение. Состоит из строкового имени характеристики */
     private lateinit var queueRead: Queue<String>
     /** Очередь на запись. Состоит из строкового имени характеристики и byteArray */
@@ -91,11 +93,13 @@ class BluetoothLeService: Service() {
     /** Получить список обнаруженных устройств */
     val devices:List<BtLeDevice>
         get() = bluetoothLeDevices.toList()
+    /** */
+    private lateinit var settings:SharedPreferences
 
 
     /** Получить текущее состояние сервиса */
     val state : Int
-        get() = this.connectionState
+        get() = this.serviceState
 
 
 
@@ -162,25 +166,25 @@ class BluetoothLeService: Service() {
                 /** */
                 BluetoothProfile.STATE_DISCONNECTING -> {
                     action = ACTION_GATT_DISCONNECTING
-                    connectionState = STATE_DISCONNECTING
+                    serviceState = STATE_DISCONNECTING
                 }
                 /** */
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     action = ACTION_GATT_DISCONNECTED
                     Log.d(TAG, "Закрываем сервис")
                     close()
-                    connectionState = STATE_DISCONNECTED
+                    serviceState = STATE_DISCONNECTED
 
                 }
                 /** */
                 BluetoothProfile.STATE_CONNECTING -> {
                     action = ACTION_GATT_CONNECTING
-                    connectionState = STATE_CONNECTING
+                    serviceState = STATE_CONNECTING
                 }
                 /** */
                 BluetoothProfile.STATE_CONNECTED -> {
                     action = ACTION_GATT_CONNECTED
-                    connectionState = STATE_CONNECTED
+                    serviceState = STATE_CONNECTED
                     Handler(Looper.getMainLooper()).postDelayed({
                         if(gatt!!.discoverServices()) {
                             Log.d(TAG, "Начали исследовать сервисы")
@@ -192,7 +196,7 @@ class BluetoothLeService: Service() {
                 /** */
                 else -> {
                     action = ACTION_GATT_UNKNOWN
-                    connectionState = STATE_UNKNOWN
+                    serviceState = STATE_UNKNOWN
                 }
             }
             Log.d(gatCallBackTag, "Состояние подключения изменено на $action, статус: $status, новое состояние $newState")
@@ -249,7 +253,7 @@ class BluetoothLeService: Service() {
                         charRegime  = serviceBlinker!!.getCharacteristic(UUID_SERVICE_CHAR_REGIME)
                         Log.d(TAG, "Сервис: ${serviceBlinker!!.uuid}, Цвет: ${charColor!!.uuid}, свойства ${charColor?.properties.toString()}")
                         Log.d(TAG, "Сервис: ${serviceBlinker!!.uuid}, Режим: ${charRegime!!.uuid}")
-                        connectionState = STATE_DISCOVERED
+                        serviceState = STATE_DISCOVERED
                         if((charColor?.properties?.and(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT))
                             == BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT ) {
                             Log.d(TAG, "Запись по умолчанию ${BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT}, signed: ${BluetoothGattCharacteristic.WRITE_TYPE_SIGNED}, ${BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE}")
@@ -367,6 +371,9 @@ class BluetoothLeService: Service() {
      * Инициализирует ссылку на локальный менеджер Блютуз и на устройство Блютуз
      */
     private fun initialize():Boolean {
+        settings =
+            PreferenceManager.getDefaultSharedPreferences(applicationContext)
+
         if(!::queueRead.isInitialized) {
             queueRead = LinkedList()
         }
@@ -397,6 +404,7 @@ class BluetoothLeService: Service() {
         }
 
         Log.d(TAG, "Инициализация прошла успешно")
+
         return true
     }
 
@@ -502,7 +510,7 @@ class BluetoothLeService: Service() {
             Log.w(TAG, "Пробую использовать существующий bluetoothGATT для подключения")
             return if(bluetoothGatt!!.connect()) {
                 Log.w(TAG, "Подключились")
-                connectionState = STATE_CONNECTING
+                serviceState = STATE_CONNECTING
                 true
             } else {
                 Log.w(TAG, "Не подключился")
@@ -513,9 +521,13 @@ class BluetoothLeService: Service() {
         if(::bluetoothAdapter.isInitialized) {
             val bluetoothDevice: BluetoothDevice = bluetoothAdapter.getRemoteDevice(address)
             /** Если устройство не сопряжено, сопрячь */
-            // if(bluetoothDevice.bondState == BluetoothDevice.BOND_NONE) {
-            //    bluetoothDevice.createBond()
-            //}
+            Log.d(TAG, "Сопрячь устройство ${AppConst.boundDevice}: ${settings.getBoolean(AppConst.boundDevice, true)}")
+            if(settings.getBoolean(AppConst.boundDevice, true)) {
+                if(bluetoothDevice.bondState == BluetoothDevice.BOND_NONE) {
+                    Log.d(TAG, "Пытаемся связать устройство ${bluetoothDevice.address}")
+                    bluetoothDevice.createBond()
+                }
+            }
 
             Log.w(TAG, "Обнаружено стройство $address")
             Handler(Looper.getMainLooper()).postDelayed({
@@ -536,7 +548,7 @@ class BluetoothLeService: Service() {
                 }
                 Log.d(TAG, "Пробую создать новое подключение / Ответ должен прийти асинхронно в широковещательном событии")
                 bluetoothDeviceAddress = address
-                connectionState = STATE_CONNECTING
+                serviceState = STATE_CONNECTING
             }, 1000)
         } else {
             Log.e(TAG, "Адаптер не инициализирован, или нет соответствующих разрешений. Не могу подключиться")
@@ -700,8 +712,9 @@ class BluetoothLeService: Service() {
     /**
      * Запуск процесса сканирования
      */
-    fun startScan() {
+    private fun startScan() {
         broadcastUpdate(ACTION_DEVICE_SCAN_START)
+
         val filterUUID = UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB")
         Log.d(TAG, "Запуск сканирования $filterUUID")
         bluetoothLeDevices.clear()
@@ -725,6 +738,7 @@ class BluetoothLeService: Service() {
         bluetoothLeScanner.startScan(filters, scanSettings, leScanCallback)
 
         isScan = true
+        serviceState = STATE_SCANNING
 
         /**
          * После истечения периода LSHelper.scanPeriod
@@ -743,6 +757,7 @@ class BluetoothLeService: Service() {
         isScan = false
         broadcastUpdate(ACTION_DEVICE_SCAN_STOP)
         bluetoothLeScanner.stopScan(leScanCallback)
+        serviceState = STATE_UNKNOWN
         Log.d(TAG, "Сканирование окончено")
     }
 

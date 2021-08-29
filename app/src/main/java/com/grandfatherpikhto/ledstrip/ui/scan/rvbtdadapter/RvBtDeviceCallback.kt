@@ -1,4 +1,4 @@
-package com.grandfatherpikhto.ledstrip.rvbtdadapter
+package com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter
 
 import android.view.View
 

@@ -161,7 +161,7 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.itemOptions -> {
-                navController?.navigate(R.id.OptionsFragment)
+                navController?.navigate(R.id.SettingsFragment)
                 return true
             }
             R.id.itemScanBtDevices -> {
@@ -266,12 +266,6 @@ class MainActivity : AppCompatActivity() {
         navController   = navHost!!.findNavController()
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
-
-//        if(::btDeviceAddress.isInitialized && btDeviceAddress != getString(R.string.default_bt_device_address)) {
-//            navController.navigate(R.id.LedstripFragment)
-//        } else {
-//            navController.navigate(R.id.ScanFragment)
-//        }
     }
 
     /**

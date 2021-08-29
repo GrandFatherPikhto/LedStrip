@@ -1,4 +1,4 @@
-package com.grandfatherpikhto.ledstrip.rvbtdadapter
+package com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter
 
 import android.bluetooth.BluetoothDevice
 import android.view.LayoutInflater

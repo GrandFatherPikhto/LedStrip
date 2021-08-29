@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <SwitchPreferenceCompat
+        app:defaultValue="true"
+        app:key="option_bound_on_select"
+        app:summary="@string/option_binding_on_select_summary"
+        app:title="@string/option_binding_on_select" />
+
+    <SwitchPreferenceCompat
+        app:defaultValue="true"
+        app:key="option_save_on_select"
+        app:summary="@string/option_save_on_select_summary"
+        app:title="@string/option_save_on_select" />
+
+</PreferenceScreen>

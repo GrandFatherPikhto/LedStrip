@@ -20,4 +20,24 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="options_fragment_label">Options</string>
     <string name="itemOptions">Options</string>
+    <string name="cbSaveDevice">Save BT device address on select</string>
+    <string name="cbBoundDevice">Bound BT device on select</string>
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="option_binding_on_select">Binding device on select</string>
+    <string name="option_save_on_select">Save selected device</string>
+    <string name="option_binding_on_select_summary">Pair the selected Bluetooth device if it is not paired with your phone</string>
+    <string name="option_save_on_select_summary">Save the selected Bluetooth device if it is not paired with your phone</string>
 </resources>

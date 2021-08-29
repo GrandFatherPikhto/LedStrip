@@ -18,4 +18,18 @@
     <string name="itemEnableLedStrip">Включить</string>
     <string name="options_fragment_label">Настройки</string>
     <string name="itemOptions">Настройки</string>
+    <string name="cbSaveDevice">Сохранять адрес устройства</string>
+    <string name="cbBoundDevice">Сопрягать устройство</string>
+    <string name="messages_header">Сообщения</string>
+    <string name="sync_header">Синхронизировать</string>
+    <string name="signature_title">Ваша сигнатура</string>
+    <string name="reply_title">Ответ по умолчанию</string>
+    <string name="sync_title">Синхронизировать почту</string>
+    <string name="attachment_title">Загружать входящие прикрепы</string>
+    <string name="attachment_summary_on">Автоматически загружать прикрепы</string>
+    <string name="attachment_summary_off">Загружать прикрепы только после запроса</string>
+    <string name="option_binding_on_select">Связать выбранное устройство</string>
+    <string name="option_save_on_select">Сохранить выбранное устройство</string>
+    <string name="option_binding_on_select_summary">Сопрячь выбранное Блютуз устройство, если оно не сопряжено с телефоном</string>
+    <string name="option_save_on_select_summary">Сохранить выбранное Блютуз устройство, если оно не сопряжено с телефоном</string>
 </resources>

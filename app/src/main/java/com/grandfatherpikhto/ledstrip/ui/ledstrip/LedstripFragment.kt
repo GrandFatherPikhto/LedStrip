@@ -32,6 +32,9 @@ class LedstripFragment : Fragment() {
     /** */
     private var _binding: FragmentLedstripBinding? = null
 
+    /** Это свойство валидно только между onCreateView и onDestroyView */
+    private val binding get() = _binding!!
+
     /** Настройки приложения. Прихватываем отсюда адрес устройства, к которому подключаемся */
     private lateinit var preferences: SharedPreferences
 
@@ -41,8 +44,6 @@ class LedstripFragment : Fragment() {
     /** */
     private lateinit var btDeviceAddress: String
 
-    /** Это свойство валидно только между onCreateView и onDestroyView */
-    private val binding get() = _binding!!
 
     /** Объект сервиса, к которому подключаемся */
     private var bluetoothLeService: BluetoothLeService? = null

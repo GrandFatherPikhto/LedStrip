@@ -1,5 +1,6 @@
 package com.grandfatherpikhto.ledstrip.ui.scan
 
+import android.bluetooth.BluetoothDevice
 import android.content.*
 import android.os.Bundle
 import android.os.IBinder
@@ -8,14 +9,15 @@ import android.view.*
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.grandfatherpikhto.ledstrip.ui.MainActivity
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.FragmentScanBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
-import com.grandfatherpikhto.ledstrip.rvbtdadapter.BtLeDevice
-import com.grandfatherpikhto.ledstrip.rvbtdadapter.RvBtDeviceAdapter
-import com.grandfatherpikhto.ledstrip.rvbtdadapter.RvBtDeviceCallback
+import com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter.BtLeDevice
+import com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter.RvBtDeviceAdapter
+import com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter.RvBtDeviceCallback
 import com.grandfatherpikhto.ledstrip.service.BluetoothLeService
 
 /**
@@ -36,6 +38,8 @@ class ScanFragment : Fragment() {
     private lateinit var rvBtDeviceAdapter: RvBtDeviceAdapter
     /** Сюда запишется адрес выбранного устройства для того, чтобы потом к нему можно было подключиться */
     private lateinit var preferences: SharedPreferences
+    /** */
+    private lateinit var settings: SharedPreferences
     /** */
     private var isBound:Boolean = false
     /** Объект сервиса, к которому подключаемся */
@@ -72,7 +76,7 @@ class ScanFragment : Fragment() {
             val binder = service as BluetoothLeService.LocalLeServiceBinder
             bluetoothLeService = binder.getService()
             if(bluetoothLeService != null) {
-                if(bluetoothLeService!!.state != BluetoothLeService.STATE_SCANNING) {
+                if(bluetoothLeService!!.state == BluetoothLeService.STATE_SCANNING) {
                     rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.devices)
                     Log.d(TAG, "Устанавливаем список уже найденных устройств")
                 } else {
@@ -147,16 +151,18 @@ class ScanFragment : Fragment() {
         super.onResume()
     }
 
-    private fun connectToDevice(bluetoothDevice: BtLeDevice) {
-        Log.d(TAG, "Подключаемся к устройству ${bluetoothDevice.name}")
+    private fun connectBTDevice(btLeDevice: BtLeDevice) {
+        Log.d(TAG, "Подключаемся к устройству ${btLeDevice.name}")
         if(bluetoothLeService?.state == BluetoothLeService.STATE_SCANNING) {
             bluetoothLeService?.stopScan()
         }
 
-        val editor: SharedPreferences.Editor = preferences.edit()
-        editor.putString(AppConst.btName, bluetoothDevice.name)
-        editor.putString(AppConst.btAddress, bluetoothDevice.address)
-        editor.apply()
+        if(settings.getBoolean(AppConst.saveDevice, true)) {
+            val editor: SharedPreferences.Editor = preferences.edit()
+            editor.putString(AppConst.btName, btLeDevice.name)
+            editor.putString(AppConst.btAddress, btLeDevice.address)
+            editor.apply()
+        }
 
         if(bluetoothLeService?.state == BluetoothLeService.STATE_SCANNING) {
             bluetoothLeService?.stopScan()
@@ -178,7 +184,7 @@ class ScanFragment : Fragment() {
                 }
 
                 override fun onDeviceLongClick(model: BtLeDevice, view: View) {
-                    connectToDevice(model)
+                    connectBTDevice(model)
                 }
 
             })
@@ -189,7 +195,8 @@ class ScanFragment : Fragment() {
     }
 
     private fun loadPreferences() {
-        preferences = context?.getSharedPreferences(AppConst.btPrefs, Context.MODE_PRIVATE)!!
+        preferences = requireContext().getSharedPreferences(AppConst.btPrefs, Context.MODE_PRIVATE)!!
+        settings    = PreferenceManager.getDefaultSharedPreferences(requireContext())
     }
 
     /**
