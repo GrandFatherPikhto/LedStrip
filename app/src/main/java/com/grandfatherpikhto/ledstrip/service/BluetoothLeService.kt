@@ -3,9 +3,7 @@ package com.grandfatherpikhto.ledstrip.service
 import android.app.Service
 import android.bluetooth.*
 import android.bluetooth.le.*
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
+import android.content.*
 import android.os.*
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -90,6 +88,8 @@ class BluetoothLeService: Service() {
     private lateinit var bluetoothLeScanner: BluetoothLeScanner
     /** Список обнаруженных устройств */
     private val bluetoothLeDevices = mutableListOf<BtLeDevice>()
+    /** Объект устройства, к которому подключаемся */
+    private var bluetoothDevice:BluetoothDevice? = null
     /** Получить список обнаруженных устройств */
     val devices:List<BtLeDevice>
         get() = bluetoothLeDevices.toList()
@@ -101,7 +101,30 @@ class BluetoothLeService: Service() {
     val state : Int
         get() = this.serviceState
 
+    /**
+     *
+     */
+    private var broadcastReceiver = object: BroadcastReceiver() {
+        @RequiresApi(Build.VERSION_CODES.M)
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if(intent != null) {
+                when(intent.action) {
+                    BluetoothDevice.ACTION_PAIRING_REQUEST -> {
+                        Log.d(TAG, "Запрос на сопряжение")
+                    }
+                    BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                        Log.d(TAG, "Изменился статус сопряжения устройства")
+                        if(serviceState != STATE_CONNECTED) {
+                            connect(bluetoothDeviceAddress)
+                        }
+                    }
+                    else -> {
 
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Объект-получатель сообщений от процесса сканирования Блютуз-устройств
@@ -161,7 +184,7 @@ class BluetoothLeService: Service() {
          */
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
-            var action: String;
+            var action: String
             when (newState) {
                 /** */
                 BluetoothProfile.STATE_DISCONNECTING -> {
@@ -171,8 +194,8 @@ class BluetoothLeService: Service() {
                 /** */
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     action = ACTION_GATT_DISCONNECTED
-                    Log.d(TAG, "Закрываем сервис")
                     close()
+                    Log.d(TAG, "Подключение закрыто")
                     serviceState = STATE_DISCONNECTED
 
                 }
@@ -181,6 +204,7 @@ class BluetoothLeService: Service() {
                     action = ACTION_GATT_CONNECTING
                     serviceState = STATE_CONNECTING
                 }
+
                 /** */
                 BluetoothProfile.STATE_CONNECTED -> {
                     action = ACTION_GATT_CONNECTED
@@ -247,7 +271,7 @@ class BluetoothLeService: Service() {
                     serviceBlinker = gatt.getService(UUID_SERVICE_BLINKER)
                     if(serviceBlinker != null) {
                         serviceBlinker!!.characteristics.forEach { char ->
-                            Log.d(TAG, "${char.uuid.toString()}")
+                            Log.d(TAG, "${char.uuid}")
                         }
                         charColor   = serviceBlinker!!.getCharacteristic(UUID_SERVICE_CHAR_COLOR)
                         charRegime  = serviceBlinker!!.getCharacteristic(UUID_SERVICE_CHAR_REGIME)
@@ -259,6 +283,7 @@ class BluetoothLeService: Service() {
                             Log.d(TAG, "Запись по умолчанию ${BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT}, signed: ${BluetoothGattCharacteristic.WRITE_TYPE_SIGNED}, ${BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE}")
                         }
                         charColor?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+
                         broadcastUpdate(ACTION_GATT_DISCOVERED)
                     }
                 } else {
@@ -330,7 +355,7 @@ class BluetoothLeService: Service() {
      *  https://developer.android.com/guide/topics/connectivity/bluetooth/connect-gatt-server
      */
     private fun broadcastUpdate(action:String) {
-        val intent: Intent = Intent(action)
+        val intent = Intent(action)
         sendBroadcast(intent)
     }
 
@@ -351,7 +376,7 @@ class BluetoothLeService: Service() {
     private fun broadcastUpdate(action:String, bluetoothGattCharacteristic: BluetoothGattCharacteristic) {
         val intent = Intent(action)
         if(UUID_SERVICE_CHAR_REGIME == bluetoothGattCharacteristic.uuid) {
-            intent.putExtra(REGIME_DATA, bluetoothGattCharacteristic.value)
+            intent.putExtra(REGIME_DATA, bluetoothGattCharacteristic.value.toInt())
             sendBroadcast(intent)
         } else if (UUID_SERVICE_CHAR_COLOR == bluetoothGattCharacteristic.uuid) {
             intent.putExtra(COLOR_DATA, bluetoothGattCharacteristic.value.toInt())
@@ -365,6 +390,26 @@ class BluetoothLeService: Service() {
     override fun onCreate() {
         initialize()
         super.onCreate()
+    }
+
+    /**
+     *
+     */
+    override fun onDestroy() {
+        super.onDestroy()
+        applicationContext.unregisterReceiver(broadcastReceiver)
+    }
+
+    /**
+     *
+     */
+    private fun makeIntentFilter():IntentFilter {
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+        intentFilter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST)
+        intentFilter.addAction(BluetoothDevice.ACTION_FOUND)
+
+        return intentFilter
     }
 
     /**
@@ -402,6 +447,8 @@ class BluetoothLeService: Service() {
                 return false
             }
         }
+
+        applicationContext.registerReceiver(broadcastReceiver, makeIntentFilter())
 
         Log.d(TAG, "Инициализация прошла успешно")
 
@@ -456,6 +503,7 @@ class BluetoothLeService: Service() {
      */
     @RequiresApi(Build.VERSION_CODES.M)
     fun writeCharRegime(regime: Int) {
+        Log.d(TAG, "writeCharRegime ${regime.toByte()}")
         writeCharRegime(byteArrayOf(regime.toByte()))
         nextWriteQueue()
     }
@@ -483,6 +531,55 @@ class BluetoothLeService: Service() {
     }
 
     /**
+     * Если в настройках установлено сопрягать устройство, если оно не сопряжено
+     * сопрягаем перед подключением
+     */
+    private fun createBond():Boolean {
+        Log.d(
+            TAG,
+            "Сопрячь устройство ${AppConst.boundDevice}: ${
+                settings.getBoolean(
+                    AppConst.boundDevice,
+                    true
+                )
+            }"
+        )
+        if (settings.getBoolean(AppConst.boundDevice, true)) {
+            if (bluetoothDevice!!.bondState == BluetoothDevice.BOND_NONE) {
+                Log.d(TAG, "Пытаемся связать устройство ${bluetoothDevice!!.address}")
+                bluetoothDevice!!.createBond()
+                return true
+            }
+        }
+
+        return false
+    }
+
+    /**
+     * Подключаемся к сервису GATT
+     * с небольшой задержкой, чтобы избежать неприятных моментов
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun gattConnect() {
+        if(bluetoothDevice != null) {
+            /**
+             * TODO: Разберись, почему можно давать только false
+             */
+            Handler(Looper.getMainLooper()).postDelayed({
+                bluetoothGatt = bluetoothDevice!!.connectGatt(
+                    applicationContext,
+                    bluetoothDevice!!.type == BluetoothDevice.DEVICE_TYPE_UNKNOWN,
+                    bluetoothGattCallback,
+                    BluetoothDevice.TRANSPORT_LE
+                )
+            }, AppConst.waitConnect)
+            serviceState = STATE_CONNECTING
+            broadcastUpdate(ACTION_GATT_CONNECTING)
+        }
+    }
+
+
+    /**
      * Подключается к серверу GATT, размещенному на устройстве Bluetooth LE.
      *
      * @param address Адрес удалённого устройства.
@@ -494,66 +591,26 @@ class BluetoothLeService: Service() {
      *
      */
     @RequiresApi(Build.VERSION_CODES.M)
-    fun connect(address:String):Boolean {
-        Log.d(TAG, "Подключаемся к $address")
-        if(
-            !::bluetoothAdapter.isInitialized
-            || address.isBlank()) {
-            Log.e(TAG, "Адаптер Блютуз не инициализирован или не задан адрес подключения")
+    fun connect(address:String = applicationContext.getString(R.string.default_bt_device_address)):Boolean {
+        if(address == applicationContext.getString(R.string.default_bt_device_address)) {
+            Log.d(TAG, "Адрес не определён")
             return false
         }
 
-        if(
-            ::bluetoothDeviceAddress.isInitialized
-            && address == bluetoothDeviceAddress
-            && bluetoothGatt != null) {
-            Log.w(TAG, "Пробую использовать существующий bluetoothGATT для подключения")
-            return if(bluetoothGatt!!.connect()) {
-                Log.w(TAG, "Подключились")
-                serviceState = STATE_CONNECTING
-                true
-            } else {
-                Log.w(TAG, "Не подключился")
-                false
-            }
+        bluetoothDeviceAddress = address
+        bluetoothDevice = bluetoothAdapter.getRemoteDevice(address)
+
+        /**
+         * Если устройство не сопряжено, сопрягаем и на момент сопряжения
+         * прекращаем все действия.
+         * Если сопряжение пройдёт удачно, снова пытаемся подключиться
+         */
+        if(createBond()) {
+            return true
         }
 
-        if(::bluetoothAdapter.isInitialized) {
-            val bluetoothDevice: BluetoothDevice = bluetoothAdapter.getRemoteDevice(address)
-            /** Если устройство не сопряжено, сопрячь */
-            Log.d(TAG, "Сопрячь устройство ${AppConst.boundDevice}: ${settings.getBoolean(AppConst.boundDevice, true)}")
-            if(settings.getBoolean(AppConst.boundDevice, true)) {
-                if(bluetoothDevice.bondState == BluetoothDevice.BOND_NONE) {
-                    Log.d(TAG, "Пытаемся связать устройство ${bluetoothDevice.address}")
-                    bluetoothDevice.createBond()
-                }
-            }
+        gattConnect()
 
-            Log.w(TAG, "Обнаружено стройство $address")
-            Handler(Looper.getMainLooper()).postDelayed({
-                if(bluetoothDevice.type == BluetoothDevice.DEVICE_TYPE_UNKNOWN) {
-                    bluetoothGatt = bluetoothDevice.connectGatt(
-                        baseContext
-                        , true
-                        , bluetoothGattCallback
-                        , BluetoothDevice.TRANSPORT_LE)
-                    Log.d(TAG, "Устройство не закэшировано")
-                } else {
-                    bluetoothGatt = bluetoothDevice.connectGatt(
-                        baseContext
-                        , true
-                        , bluetoothGattCallback
-                        , BluetoothDevice.TRANSPORT_LE)
-                    Log.d(TAG, "Устройство закэшировано")
-                }
-                Log.d(TAG, "Пробую создать новое подключение / Ответ должен прийти асинхронно в широковещательном событии")
-                bluetoothDeviceAddress = address
-                serviceState = STATE_CONNECTING
-            }, 1000)
-        } else {
-            Log.e(TAG, "Адаптер не инициализирован, или нет соответствующих разрешений. Не могу подключиться")
-            return false
-        }
 
         return true
     }
@@ -807,6 +864,18 @@ class BluetoothLeService: Service() {
     }
 
     /**
+     *
+     */
+    private fun Int.toColor():ByteArray {
+        val byteArray = ByteArray(Int.SIZE_BYTES - 1)
+        for(i in 0..2) {
+            byteArray[i] = this.shr((i + 1)*0).and(0xFF).toByte()
+        }
+
+        return byteArray
+    }
+
+    /**
      * Byte array to int
      *
      * @param byteArray
@@ -817,6 +886,18 @@ class BluetoothLeService: Service() {
         for(i in this.indices) {
             result = result.or(this[i].toInt().shl(i * 8).and(0xFF.shl(i * 8)))
         }
+        return result
+    }
+
+    /**
+     *
+     */
+    private fun ByteArray.toColor():Int {
+        var result = 0
+        for(i in 0..3) {
+            result = result.or(this[i].toInt().shl(i * 8).and(0xFF.shl(i * 8)))
+        }
+
         return result
     }
 

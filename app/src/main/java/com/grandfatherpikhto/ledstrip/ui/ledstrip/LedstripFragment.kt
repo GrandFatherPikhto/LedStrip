@@ -26,7 +26,10 @@ class LedstripFragment : Fragment() {
         const val showLog = true
         const val regimeOff = 0
         const val regimeAll = 1
-        const val regimeRun = 2
+        const val regimeTag = 2
+        const val regimeColor = 3
+        const val regimeTail  = 4
+        const val regimeBlink = 5
     }
 
     /** */
@@ -120,7 +123,7 @@ class LedstripFragment : Fragment() {
                         when (it) {
                             BluetoothLeService.REGIME_DATA -> {
                                 regime =
-                                    intent.getByteArrayExtra(BluetoothLeService.REGIME_DATA)!![0].toInt()
+                                    intent.getIntExtra(BluetoothLeService.REGIME_DATA, 0)
                                 initRegime()
                             }
                             BluetoothLeService.COLOR_DATA -> {
@@ -141,9 +144,12 @@ class LedstripFragment : Fragment() {
                         cpViewLeds.isEnabled = false
                     }
 
-                    view?.findViewById<RadioButton>(R.id.rbRegimeOff)?.isEnabled = false
-                    view?.findViewById<RadioButton>(R.id.rbRegimeAll)?.isEnabled = false
-                    view?.findViewById<RadioButton>(R.id.rbRegimeRun)?.isEnabled = false
+                    view?.findViewById<RadioButton>(R.id.rbRegimeOff)?.isEnabled   = false
+                    view?.findViewById<RadioButton>(R.id.rbRegimeAll)?.isEnabled   = false
+                    view?.findViewById<RadioButton>(R.id.rbRegimeTag)?.isEnabled   = false
+                    view?.findViewById<RadioButton>(R.id.rbRegimeBlink)?.isEnabled = false
+                    view?.findViewById<RadioButton>(R.id.rbRegimeColor)?.isEnabled = false
+                    view?.findViewById<RadioButton>(R.id.rbRegimeTail)?.isEnabled  = false
                 }
 
                 BluetoothLeService.ACTION_GATT_DISCOVERED -> {
@@ -157,6 +163,9 @@ class LedstripFragment : Fragment() {
         }
     }
 
+    /**
+     *
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -169,28 +178,47 @@ class LedstripFragment : Fragment() {
         binding.apply {
             cpViewLeds = colorPickerView
             colorPickerView.isEnabled = false
+
             /** Неиспользуемые параметры: "_" */
             cpViewLeds.subscribe { color, _, _ ->
                 bluetoothLeService?.writeColor(color)
             }
 
-            rbRegimeAll.isEnabled = false
-            rbRegimeOff.isEnabled = false
-            rbRegimeRun.isEnabled = false
+            rbRegimeAll?.isEnabled   = false
+            rbRegimeOff?.isEnabled   = false
+            rbRegimeTail?.isEnabled  = false
+            rbRegimeColor?.isEnabled = false
+            rbRegimeTag?.isEnabled   = false
+            rbRegimeBlink?.isEnabled = false
 
-            rbRegimeOff.setOnClickListener {
+            rbRegimeOff?.setOnClickListener {
                 regime = regimeOff
                 bluetoothLeService?.writeCharRegime(regimeOff)
             }
 
-            rbRegimeAll.setOnClickListener {
+            rbRegimeAll?.setOnClickListener {
                 regime = regimeAll
                 bluetoothLeService?.writeCharRegime(regimeAll)
             }
 
-            rbRegimeRun.setOnClickListener {
-                regime = regimeRun
-                bluetoothLeService?.writeCharRegime(regimeRun)
+            rbRegimeTag?.setOnClickListener {
+                regime = regimeTag
+                bluetoothLeService?.writeCharRegime(regimeTag)
+            }
+
+            rbRegimeBlink?.setOnClickListener {
+                regime = regimeBlink
+                bluetoothLeService?.writeCharRegime(regimeBlink)
+            }
+
+            rbRegimeTail?.setOnClickListener {
+                regime = regimeTail
+                bluetoothLeService?.writeCharRegime(regimeTail)
+            }
+
+            rbRegimeColor?.setOnClickListener {
+                regime = regimeColor
+                bluetoothLeService?.writeCharRegime(regimeColor)
             }
         }
 
@@ -328,7 +356,16 @@ class LedstripFragment : Fragment() {
         view?.findViewById<RadioButton>(R.id.rbRegimeAll)?.apply {
             isEnabled = true
         }
-        view?.findViewById<RadioButton>(R.id.rbRegimeRun)?.apply {
+        view?.findViewById<RadioButton>(R.id.rbRegimeTag)?.apply {
+            isEnabled = true
+        }
+        view?.findViewById<RadioButton>(R.id.rbRegimeBlink)?.apply {
+            isEnabled = true
+        }
+        view?.findViewById<RadioButton>(R.id.rbRegimeColor)?.apply {
+            isEnabled = true
+        }
+        view?.findViewById<RadioButton>(R.id.rbRegimeTail)?.apply {
             isEnabled = true
         }
 
@@ -343,9 +380,21 @@ class LedstripFragment : Fragment() {
                 Log.d(TAG, "Режим: Выключено")
                 view?.findViewById<RadioButton>(R.id.rbRegimeAll)?.isChecked = true
             }
-            regimeRun -> {
+            regimeTag -> {
                 Log.d(TAG, "Режим: Выключено")
-                view?.findViewById<RadioButton>(R.id.rbRegimeRun)?.isChecked = true
+                view?.findViewById<RadioButton>(R.id.rbRegimeTag)?.isChecked = true
+            }
+            regimeBlink -> {
+                Log.d(TAG, "Режим: Выключено")
+                view?.findViewById<RadioButton>(R.id.rbRegimeBlink)?.isChecked = true
+            }
+            regimeColor -> {
+                Log.d(TAG, "Режим: Выключено")
+                view?.findViewById<RadioButton>(R.id.rbRegimeColor)?.isChecked = true
+            }
+            regimeTail -> {
+                Log.d(TAG, "Режим: Выключено")
+                view?.findViewById<RadioButton>(R.id.rbRegimeTail)?.isChecked = true
             }
         }
     }

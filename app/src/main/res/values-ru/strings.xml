@@ -32,4 +32,8 @@
     <string name="option_save_on_select">Сохранить выбранное устройство</string>
     <string name="option_binding_on_select_summary">Сопрячь выбранное Блютуз устройство, если оно не сопряжено с телефоном</string>
     <string name="option_save_on_select_summary">Сохранить выбранное Блютуз устройство, если оно не сопряжено с телефоном</string>
+    <string name="rbRegimeTag">Пятнашки</string>
+    <string name="rbRegimeBlink">Мерцать</string>
+    <string name="rbRegimeTail">Хвост</string>
+    <string name="rbRegimeColor">Цвет</string>
 </resources>

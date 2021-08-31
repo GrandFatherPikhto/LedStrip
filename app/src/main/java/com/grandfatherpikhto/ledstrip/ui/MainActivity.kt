@@ -161,12 +161,12 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.itemOptions -> {
-                navController?.navigate(R.id.SettingsFragment)
+                navController.navigate(R.id.SettingsFragment)
                 return true
             }
             R.id.itemScanBtDevices -> {
                 Log.d(TAG, "Открыть список устройств")
-                navController?.navigate(R.id.ScanFragment)
+                navController.navigate(R.id.ScanFragment)
                 return false
             }
             else -> super.onOptionsItemSelected(item)
@@ -263,7 +263,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun setStartNavigate() {
         navHost         = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
-        navController   = navHost!!.findNavController()
+        navController   = navHost.findNavController()
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
     }
@@ -313,7 +313,7 @@ class MainActivity : AppCompatActivity() {
         (fragments.firstOrNull { navHostFragment ->
             navHostFragment is NavHostFragment
         } as NavHostFragment)
-            ?.childFragmentManager.fragments.firstNotNullOf { fragment ->
+            .childFragmentManager.fragments.firstNotNullOf { fragment ->
                 if ( fragment is T )  return fragment
             }
 

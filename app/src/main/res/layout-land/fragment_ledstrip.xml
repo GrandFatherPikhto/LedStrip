@@ -29,22 +29,40 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <RadioButton
-            android:id="@+id/rbRegimeOff"
+            android:id="@+id/rbRegimeOff2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/rbRegimeOff" />
 
         <RadioButton
-            android:id="@+id/rbRegimeAll"
+            android:id="@+id/rbRegimeAll2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/rbRegimeAll" />
 
         <RadioButton
-            android:id="@+id/rbRegimeRun"
+            android:id="@+id/rbRegimeTag2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/rbRegimeRun" />
+            android:text="@string/rbRegimeTag" />
+
+        <RadioButton
+            android:id="@+id/rbRegimeBlink2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/rbRegimeBlink" />
+
+        <RadioButton
+            android:id="@+id/rbRegimeTail2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/rbRegimeTail" />
+
+        <RadioButton
+            android:id="@+id/rbRegimeColor2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/rbRegimeColor" />
     </RadioGroup>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

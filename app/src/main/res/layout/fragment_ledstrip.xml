@@ -41,10 +41,28 @@
             android:text="@string/rbRegimeAll" />
 
         <RadioButton
-            android:id="@+id/rbRegimeRun"
+            android:id="@+id/rbRegimeTag"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/rbRegimeRun" />
+            android:text="@string/rbRegimeTag" />
+
+        <RadioButton
+            android:id="@+id/rbRegimeBlink"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/rbRegimeBlink" />
+
+        <RadioButton
+            android:id="@+id/rbRegimeTail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/rbRegimeTail" />
+
+        <RadioButton
+            android:id="@+id/rbRegimeColor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/rbRegimeColor" />
     </RadioGroup>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

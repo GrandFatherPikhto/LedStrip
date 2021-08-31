@@ -171,6 +171,9 @@ class ScanFragment : Fragment() {
         findNavController().navigate(R.id.action_ScanFragment_to_LedstripFragment)
     }
 
+    /**
+     *
+     */
     private fun bindRvBtDevices() {
         binding.apply {
             rvBtDeviceAdapter = RvBtDeviceAdapter()

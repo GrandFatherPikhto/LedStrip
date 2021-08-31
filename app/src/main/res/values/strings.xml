@@ -40,4 +40,8 @@
     <string name="option_save_on_select">Save selected device</string>
     <string name="option_binding_on_select_summary">Pair the selected Bluetooth device if it is not paired with your phone</string>
     <string name="option_save_on_select_summary">Save the selected Bluetooth device if it is not paired with your phone</string>
+    <string name="rbRegimeTag">Tags</string>
+    <string name="rbRegimeBlink">Blink</string>
+    <string name="rbRegimeTail">Tail</string>
+    <string name="rbRegimeColor">Color</string>
 </resources>

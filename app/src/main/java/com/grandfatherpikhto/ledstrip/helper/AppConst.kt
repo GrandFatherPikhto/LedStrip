@@ -10,4 +10,5 @@ object AppConst {
     const val boundDevice      = "option_bound_on_select"
     const val saveDevice       = "option_save_on_select"
     const val scanPeriod:Long  = 10000
+    const val waitConnect:Long = 1000
 }
