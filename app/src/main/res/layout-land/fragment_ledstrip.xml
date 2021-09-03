@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aigestudio="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/csLedstrip"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.ledstrip.LedstripFragment">
@@ -10,6 +12,7 @@
         android:id="@+id/colorPickerView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        aigestudio:layout_constraintEnd_toStartOf="@+id/regimePicker"
         app:enableAlpha="false"
         app:enableBrightness="true"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -19,50 +22,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <RadioGroup
-        android:id="@+id/rgRegime"
+    <NumberPicker
+        android:id="@+id/regimePicker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/colorPickerView"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <RadioButton
-            android:id="@+id/rbRegimeOff2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/rbRegimeOff" />
-
-        <RadioButton
-            android:id="@+id/rbRegimeAll2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/rbRegimeAll" />
-
-        <RadioButton
-            android:id="@+id/rbRegimeTag2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/rbRegimeTag" />
-
-        <RadioButton
-            android:id="@+id/rbRegimeBlink2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/rbRegimeBlink" />
-
-        <RadioButton
-            android:id="@+id/rbRegimeTail2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/rbRegimeTail" />
-
-        <RadioButton
-            android:id="@+id/rbRegimeColor2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/rbRegimeColor" />
-    </RadioGroup>
+        android:layout_gravity="center_horizontal"
+        android:width="100dp"
+        android:orientation="vertical"
+        aigestudio:layout_constraintBottom_toBottomOf="parent"
+        aigestudio:layout_constraintEnd_toEndOf="parent"
+        aigestudio:layout_constraintHorizontal_bias="0.5"
+        aigestudio:layout_constraintStart_toEndOf="@+id/colorPickerView"
+        aigestudio:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

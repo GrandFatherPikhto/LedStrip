@@ -22,7 +22,7 @@ class RvBtDeviceAdapter : RecyclerView.Adapter<RvBtDeviceAdapter.RvBtDeviceHolde
         fun bind(btDevice: BtLeDevice) {
             with(binding) {
                 btDevice.name.also {
-                    if(it == null) {
+                    if(it.isEmpty()) {
                         tvBtDeviceName.text = itemView.context.getString(R.string.default_bt_device_name)
                     } else {
                         tvBtDeviceName.text = it
