@@ -7,7 +7,6 @@ import android.os.IBinder
 import android.util.Log
 import android.view.*
 import android.widget.NumberPicker
-import android.widget.RadioButton
 import android.widget.Switch
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
@@ -184,7 +183,14 @@ class LedstripFragment : Fragment() {
                 bluetoothLeService?.writeColor(color)
             }
 
-            regimePicker.displayedValues = arrayOf("Выключить", "Все", "Пятнашки", "Вода", "Хвост", "Мерцание")
+            regimePicker.displayedValues = arrayOf(
+                getString(R.string.regimeOff),
+                getString(R.string.regimeAll),
+                getString(R.string.regimeTag),
+                getString(R.string.regimeWater),
+                getString(R.string.regimeTail),
+                getString(R.string.regimeBlink)
+            )
             regimePicker.minValue = 0
             regimePicker.maxValue = 5
 

@@ -45,4 +45,10 @@
     <string name="rbRegimeTail">Tail</string>
     <string name="rbRegimeColor">Color</string>
     <string name="swEnable">Enable/Disable</string>
+    <string name="regimeOff">Off</string>
+    <string name="regimeAll">All</string>
+    <string name="regimeTag">Tags</string>
+    <string name="regimeTail">Tail</string>
+    <string name="regimeWater">Water</string>
+    <string name="regimeBlink">Blink</string>
 </resources>

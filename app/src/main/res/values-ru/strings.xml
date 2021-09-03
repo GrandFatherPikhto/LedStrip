@@ -37,4 +37,10 @@
     <string name="rbRegimeTail">Хвост</string>
     <string name="rbRegimeColor">Цвет</string>
     <string name="swEnable">Вкл./Выкл.</string>
+    <string name="regimeOff">Выключить</string>
+    <string name="regimeAll">Все</string>
+    <string name="regimeTag">Пятнашки</string>
+    <string name="regimeTail">Хвост</string>
+    <string name="regimeWater">Вода</string>
+    <string name="regimeBlink">Мерцать</string>
 </resources>
