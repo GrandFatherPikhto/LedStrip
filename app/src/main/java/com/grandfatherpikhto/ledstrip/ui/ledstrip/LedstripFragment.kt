@@ -128,6 +128,7 @@ class LedstripFragment : Fragment() {
                             BluetoothLeService.REGIME_DATA -> {
                                 regime =
                                     intent.getIntExtra(BluetoothLeService.REGIME_DATA, 0)
+                                regimePrev = regime
                                 initRegime()
                                 Log.d(TAG, "Получено значение режима $regime")
                             }
@@ -194,23 +195,26 @@ class LedstripFragment : Fragment() {
             regimePicker.minValue = 0
             regimePicker.maxValue = 5
 
-            regimePicker.setOnValueChangedListener { _, oldVal, newVal ->
+            regimePicker.setOnValueChangedListener { _, _, newVal ->
                 Log.d(TAG, "Режим: $newVal")
                 regime = newVal
-                regimePrev = oldVal
+                if(regime != regimeOff) {
+                    regimePrev = regime
+                }
                 bluetoothLeService?.writeCharRegime(regime)
+                swEnable.isChecked = regime != regimeOff
             }
 
-            swEnable.setOnCheckedChangeListener { _, isChecked ->
-                Log.d(TAG, "On $isChecked")
-                if(isChecked) {
-                    regime = regimePrev
-                } else {
-                    regime = regimeOff
-                }
-                regimePicker.value = regime
-                bluetoothLeService?.writeCharRegime(regime)
-            }
+//            swEnable.setOnCheckedChangeListener { _, isChecked ->
+//                Log.d(TAG, "On $isChecked")
+//                regime = if(isChecked) {
+//                    regimePrev
+//                } else {
+//                    regimeOff
+//                }
+//                regimePicker.value = regime
+//                bluetoothLeService?.writeCharRegime(regime)
+//            }
         }
 
         doBindBluetoothLeService()
@@ -344,9 +348,10 @@ class LedstripFragment : Fragment() {
         view?.findViewById<NumberPicker>(R.id.regimePicker)?.apply {
             value = regime
         }
-        view?.findViewById<Switch>(R.id.swEnable)?.apply {
-            isChecked = regime != regimeOff
-        }
+
+//        view?.findViewById<Switch>(R.id.swEnable)?.apply {
+//            isChecked = regime != regimeOff
+//        }
     }
 
     /**
