@@ -6,7 +6,9 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.view.*
+import android.widget.NumberPicker
 import android.widget.RadioButton
+import android.widget.Switch
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -59,6 +61,9 @@ class LedstripFragment : Fragment() {
 
     /** */
     private var regime: Int = regimeOff
+
+    /** */
+    private var regimePrev: Int = regimeAll
 
     /** Объект подключения к сервису */
     private val serviceBluetoothLeConnection = object : ServiceConnection {
@@ -125,6 +130,7 @@ class LedstripFragment : Fragment() {
                                 regime =
                                     intent.getIntExtra(BluetoothLeService.REGIME_DATA, 0)
                                 initRegime()
+                                Log.d(TAG, "Получено значение режима $regime")
                             }
                             BluetoothLeService.COLOR_DATA -> {
                                 val color = intent.getIntExtra(BluetoothLeService.COLOR_DATA, -1)
@@ -182,9 +188,22 @@ class LedstripFragment : Fragment() {
             regimePicker.minValue = 0
             regimePicker.maxValue = 5
 
-            regimePicker.setOnValueChangedListener { picker, oldVal, newVal ->
+            regimePicker.setOnValueChangedListener { _, oldVal, newVal ->
                 Log.d(TAG, "Режим: $newVal")
-                bluetoothLeService?.writeCharRegime(newVal)
+                regime = newVal
+                regimePrev = oldVal
+                bluetoothLeService?.writeCharRegime(regime)
+            }
+
+            swEnable.setOnCheckedChangeListener { _, isChecked ->
+                Log.d(TAG, "On $isChecked")
+                if(isChecked) {
+                    regime = regimePrev
+                } else {
+                    regime = regimeOff
+                }
+                regimePicker.value = regime
+                bluetoothLeService?.writeCharRegime(regime)
             }
         }
 
@@ -316,8 +335,12 @@ class LedstripFragment : Fragment() {
      * https://kotlinlang.org/docs/lambdas.html#function-types
      */
     private fun initRegime() {
-
-
+        view?.findViewById<NumberPicker>(R.id.regimePicker)?.apply {
+            value = regime
+        }
+        view?.findViewById<Switch>(R.id.swEnable)?.apply {
+            isChecked = regime != regimeOff
+        }
     }
 
     /**

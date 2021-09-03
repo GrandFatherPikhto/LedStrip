@@ -36,4 +36,5 @@
     <string name="rbRegimeBlink">Мерцать</string>
     <string name="rbRegimeTail">Хвост</string>
     <string name="rbRegimeColor">Цвет</string>
+    <string name="swEnable">Вкл./Выкл.</string>
 </resources>

@@ -44,4 +44,5 @@
     <string name="rbRegimeBlink">Blink</string>
     <string name="rbRegimeTail">Tail</string>
     <string name="rbRegimeColor">Color</string>
+    <string name="swEnable">Enable/Disable</string>
 </resources>

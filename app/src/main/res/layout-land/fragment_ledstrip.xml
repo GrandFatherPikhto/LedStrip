@@ -12,7 +12,6 @@
         android:id="@+id/colorPickerView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        aigestudio:layout_constraintEnd_toStartOf="@+id/regimePicker"
         app:enableAlpha="false"
         app:enableBrightness="true"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -20,7 +19,9 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+    </top.defaults.colorpicker.ColorPickerView>
 
     <NumberPicker
         android:id="@+id/regimePicker"
@@ -29,10 +30,20 @@
         android:layout_gravity="center_horizontal"
         android:width="100dp"
         android:orientation="vertical"
-        aigestudio:layout_constraintBottom_toBottomOf="parent"
+        aigestudio:layout_constraintBottom_toTopOf="@+id/swEnable"
         aigestudio:layout_constraintEnd_toEndOf="parent"
-        aigestudio:layout_constraintHorizontal_bias="0.5"
         aigestudio:layout_constraintStart_toEndOf="@+id/colorPickerView"
         aigestudio:layout_constraintTop_toTopOf="parent" />
+
+    <Switch
+        android:id="@+id/swEnable"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:text="@string/swEnable"
+        aigestudio:layout_constraintBottom_toBottomOf="parent"
+        aigestudio:layout_constraintEnd_toEndOf="parent"
+        aigestudio:layout_constraintStart_toEndOf="@+id/colorPickerView"
+        aigestudio:layout_constraintTop_toBottomOf="@+id/regimePicker" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
