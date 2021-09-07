@@ -51,4 +51,9 @@
     <string name="regimeTail">Tail</string>
     <string name="regimeWater">Water</string>
     <string name="regimeBlink">Blink</string>
+    <string name="btnDisable">Disable</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="itemBlinker">Blink</string>
+    <string name="blinkFrequency">Frequency</string>
+    <string name="blinkFill">Fill</string>
 </resources>

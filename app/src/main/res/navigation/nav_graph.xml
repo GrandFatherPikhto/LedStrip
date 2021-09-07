@@ -42,4 +42,9 @@
             android:id="@+id/action_SettingsFragment_to_LedstripFragment"
             app:destination="@id/LedstripFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/BlinkFragment"
+        android:name="com.grandfatherpikhto.ledstrip.ui.blink.BlinkFragment"
+        android:label="fragment_blink"
+        tools:layout="@layout/fragment_blink" />
 </navigation>

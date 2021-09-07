@@ -79,6 +79,9 @@ class ScanFragment : Fragment() {
                 if(bluetoothLeService!!.state == BluetoothLeService.STATE_SCANNING) {
                     rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.devices)
                     Log.d(TAG, "Устанавливаем список уже найденных устройств")
+                    if(bluetoothLeService?.state != BluetoothLeService.STATE_SCANNING) {
+                        bluetoothLeService?.scanLeDevices()
+                    }
                 } else {
                     rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.getPairedDevices())
                     Log.d(TAG, "Устанавливаем список сопряжённых устройств")

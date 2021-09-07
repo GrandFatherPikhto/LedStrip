@@ -43,4 +43,8 @@
     <string name="regimeTail">Хвост</string>
     <string name="regimeWater">Вода</string>
     <string name="regimeBlink">Мерцать</string>
+    <string name="btnDisable">Выключить</string>
+    <string name="itemBlinker">Мерцание</string>
+    <string name="blinkFrequency">Частота</string>
+    <string name="blinkFill">Заполнение</string>
 </resources>

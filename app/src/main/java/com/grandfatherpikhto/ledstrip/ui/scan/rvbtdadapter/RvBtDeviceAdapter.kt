@@ -64,7 +64,7 @@ class RvBtDeviceAdapter : RecyclerView.Adapter<RvBtDeviceAdapter.RvBtDeviceHolde
     }
 
     /** Добавить устройство в список с обновлением списка */
-    public fun addBtDevice(device: BtLeDevice) {
+    fun addBtDevice(device: BtLeDevice) {
         if(!devices.contains(device)) {
             val exist: BtLeDevice? = devices.find { it.address.equals(device.address) }
             if (exist == null) {

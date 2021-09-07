@@ -12,4 +12,7 @@
         android:icon="@drawable/ic_baseline_search_24"
         android:title="@string/itemScanBtDevices"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/itemBlinker"
+        android:title="@string/itemBlinker" />
 </menu>

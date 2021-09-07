@@ -202,19 +202,14 @@ class LedstripFragment : Fragment() {
                     regimePrev = regime
                 }
                 bluetoothLeService?.writeCharRegime(regime)
-                swEnable.isChecked = regime != regimeOff
             }
 
-//            swEnable.setOnCheckedChangeListener { _, isChecked ->
-//                Log.d(TAG, "On $isChecked")
-//                regime = if(isChecked) {
-//                    regimePrev
-//                } else {
-//                    regimeOff
-//                }
-//                regimePicker.value = regime
-//                bluetoothLeService?.writeCharRegime(regime)
-//            }
+            btnDisable.setOnClickListener {
+                Log.d(TAG, "Disable")
+                regime = regimeOff
+                regimePicker.value = regime
+                bluetoothLeService?.writeCharRegime(regime)
+            }
         }
 
         doBindBluetoothLeService()

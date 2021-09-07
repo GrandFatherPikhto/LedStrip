@@ -111,6 +111,7 @@ class MainActivity : AppCompatActivity() {
 
         doBindBluetoothLeService()
 
+        /*
         binding.fab.setOnClickListener { view ->
             bluetoothLeService?.scanLeDevices()
             when(navController.currentDestination?.id) {
@@ -129,7 +130,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-        }
+        } */
 
         requestPermissions(
             arrayListOf(
@@ -165,9 +166,13 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
             R.id.itemScanBtDevices -> {
-                Log.d(TAG, "Открыть список устройств")
                 navController.navigate(R.id.ScanFragment)
                 return false
+            }
+            R.id.itemBlinker -> {
+                Log.d(TAG, "Открыть панель мерцания")
+                navController.navigate(R.id.BlinkFragment)
+                return true
             }
             else -> super.onOptionsItemSelected(item)
         }
@@ -264,7 +269,13 @@ class MainActivity : AppCompatActivity() {
     private fun setStartNavigate() {
         navHost         = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
         navController   = navHost.findNavController()
-        appBarConfiguration = AppBarConfiguration(navController.graph)
+        val graph = navController.navInflater.inflate(R.navigation.nav_graph)
+        if(btDeviceAddress.isEmpty() || btDeviceAddress == getString(R.string.default_bt_device_address)) {
+            graph.startDestination = R.id.ScanFragment
+            navController.graph = graph
+            Log.d(TAG, "DeviceAddress: $btDeviceAddress")
+        }
+        appBarConfiguration = AppBarConfiguration(graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
     }
 
