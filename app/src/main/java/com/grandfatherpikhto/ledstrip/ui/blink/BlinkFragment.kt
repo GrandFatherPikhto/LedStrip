@@ -43,7 +43,7 @@ class BlinkFragment : Fragment() {
          */
         @RequiresApi(Build.VERSION_CODES.M)
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as BluetoothLeService.LocalLeServiceBinder
+            val binder = service as BluetoothLeService.LocalBinder
             bluetoothLeService = binder.getService()
 
             if (LedstripFragment.showLog) {
@@ -80,38 +80,6 @@ class BlinkFragment : Fragment() {
         }
     }
 
-    private val broadcastReceiver = object : BroadcastReceiver() {
-        /**
-         *
-         */
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action!!) {
-                BluetoothLeService.ACTION_GATT_CONNECTED -> {
-                }
-                BluetoothLeService.ACTION_DATA_AVAILABLE -> {
-                    intent.extras?.keySet()?.forEach {
-                        when (it) {
-                            BluetoothLeService.REGIME_DATA -> {
-                                val regime =
-                                    intent.getIntExtra(BluetoothLeService.REGIME_DATA, 0)
-                            }
-                            BluetoothLeService.COLOR_DATA -> {
-                                val color = intent.getIntExtra(BluetoothLeService.COLOR_DATA, -1)
-                            }
-                            else -> {
-
-                            }
-                        }
-                    }
-                }
-                BluetoothLeService.ACTION_GATT_DISCONNECTED -> {
-                }
-
-                BluetoothLeService.ACTION_GATT_DISCOVERED -> {
-                }
-            }
-        }
-    }
 
     /** */
     private var _binding: FragmentBlinkBinding? = null
@@ -129,24 +97,19 @@ class BlinkFragment : Fragment() {
     ): View? {
         _binding = FragmentBlinkBinding.inflate(inflater, container, false)
         // Inflate the layout for this fragment
-        doBindBluetoothLeService()
         return inflater.inflate(R.layout.fragment_blink, container, false)
     }
 
-    /**
-     *
-     */
-    override fun onDestroyView() {
-        super.onDestroyView()
-        doUnbindBluetoothLeService()
-    }
 
     /**
      *
      */
     override fun onPause() {
         super.onPause()
-        requireContext().unregisterReceiver(broadcastReceiver)
+        if (isBond) {
+            context?.unbindService(serviceBluetoothLeConnection)
+            isBond = false
+        }
     }
 
     /**
@@ -154,13 +117,6 @@ class BlinkFragment : Fragment() {
      */
     override fun onResume() {
         super.onResume()
-        requireContext().unregisterReceiver(broadcastReceiver)
-    }
-
-    /**
-     * Привязывание сервиса
-     */
-    private fun doBindBluetoothLeService() {
         if (!isBond) {
             Intent(context, BluetoothLeService::class.java).also { intent ->
                 isBond = requireContext().bindService(
@@ -173,32 +129,6 @@ class BlinkFragment : Fragment() {
                     "doBindBluetoothService() serviceBluetoothLeConnection isBond=$isBond"
                 )
             }
-            requireContext().registerReceiver(broadcastReceiver, makeIntentFilter())
         }
-    }
-
-    /**
-     * Отвязывание сервиса
-     */
-    private fun doUnbindBluetoothLeService() {
-        if (isBond) {
-            context?.unbindService(serviceBluetoothLeConnection)
-            isBond = false
-            Log.e(LedstripFragment.TAG, "doUnbindBluetoothLeService: $isBond")
-        }
-    }
-
-    /**
-     *
-     */
-    private fun makeIntentFilter(): IntentFilter {
-        val intentFilter = IntentFilter()
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTING)
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED)
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED)
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTING)
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCOVERED)
-        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE)
-        return intentFilter
     }
 }

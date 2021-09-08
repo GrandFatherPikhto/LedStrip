@@ -1,12 +1,13 @@
 package com.grandfatherpikhto.ledstrip.service
 
-import android.app.Service
 import android.bluetooth.*
 import android.bluetooth.le.*
 import android.content.*
 import android.os.*
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.MutableLiveData
 import androidx.preference.PreferenceManager
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.helper.AppConst
@@ -14,17 +15,18 @@ import com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter.BtLeDevice
 import java.lang.StringBuilder
 import java.util.*
 
-class BluetoothLeService: Service() {
+class BluetoothLeService: LifecycleService() {
     companion object {
         const val TAG:String = "BluetoothLeService"
 
-        const val STATE_DISCONNECTING =  1
-        const val STATE_DISCONNECTED  =  0
-        const val STATE_CONNECTING    =  2
-        const val STATE_CONNECTED     =  3
-        const val STATE_DISCOVERED    =  4
-        const val STATE_SCANNING      =  5
-        const val STATE_UNKNOWN       = -1
+        const val STATE_DISCONNECTING   =  1
+        const val STATE_DISCONNECTED    =  0
+        const val STATE_CONNECTING      =  2
+        const val STATE_CONNECTED       =  3
+        const val STATE_GATT_DISCOVERED =  4
+        const val STATE_DATA_AVAILABLE  =  5
+        const val STATE_DATA_READED     =  6
+        const val STATE_UNKNOWN         = -1
 
         const val ACTION_GATT_DISCONNECTING:String = "com.grandfatherpikhto.service.STATE_DISCONNECTING"
         const val ACTION_GATT_DISCONNECTED:String = "com.grandfatherpikhto.service.STATE_DISCONNECTED"
@@ -33,14 +35,6 @@ class BluetoothLeService: Service() {
         const val ACTION_GATT_DISCOVERED:String = "com.grandfatherpikhto.service.STATE_DISCOVERED"
         const val ACTION_GATT_UNKNOWN:String = "com.grandfatherpikhto.service.STATE_UNKNOWN"
         const val ACTION_DATA_AVAILABLE:String = "com.grandfatherpikhto.service.ACTION_DATA_AVAILABLE"
-        const val ACTION_DEVICE_SCAN_FIND:String ="com.grandfatherpikhto.service.ACTION_DEVICE_SCAN"
-        const val ACTION_DEVICE_SCAN_START:String="com.grandfatherpikhto.service.ACTION_DEVICE_SCAN_START"
-        const val ACTION_DEVICE_SCAN_STOP:String="com.grandfatherpikhto.service.ACTION_DEVICE_SCAN_STOP"
-        const val ACTION_DEVICE_SCAN_BATCH_FIND:String ="com.grandfatherpikhto.service.ACTION_DEVICE_BATCH_SCAN"
-
-        const val EXTRA_DATA:String = "com.grandfatherpikhto.service.EXTRA_DATA"
-        const val REGIME_DATA:String = "com.grandfatherpikhto.service.REGIME_DATA"
-        const val COLOR_DATA:String = "com.grandfatherpikhto.service.COLOR_DATA"
 
         val UUID_SERVICE_BLINKER: UUID by lazy { UUID.fromString("000000ff-6418-5c4b-a046-0101910b5ad4") }
         val UUID_SERVICE_CHAR_COLOR: UUID by lazy { UUID.fromString("0000ff01-6418-5c4b-a046-0101910b5ad4") }
@@ -49,15 +43,19 @@ class BluetoothLeService: Service() {
         const val CHAR_COLOR  = "color"
         const val CHAR_REGIME = "regime"
 
+        const val REPEAT_WRITE_CHAR = 10
+
         const val serviceUUID1:String = "00001801-0000-1000-8000-00805F9B34FB"
         const val serviceUUID2:String = "00002A05-0000-1000-8000-00805F9B34FB"
         const val serviceUUID3:String = "00002A00-0000-1000-8000-00805F9B34FB"
         const val serviceUUID4:String = "00002A37-0000-1000-8000-00805F9B34FB"
         const val serviceUUID5:String = "0000180D-0000-1000-8000-00805F9B34FB"
+
+        val getColor  = MutableLiveData<Int>()
+        val getRegime = MutableLiveData<Int>()
+        val stateChanged = MutableLiveData<Int>()
     }
 
-    /** */
-    private val binder = LocalLeServiceBinder()
     /** */
     private lateinit var bluetoothManager: BluetoothManager
     /** */
@@ -65,7 +63,7 @@ class BluetoothLeService: Service() {
     /** */
     private var bluetoothGatt: BluetoothGatt? = null
     /** */
-    private var serviceBlinker: BluetoothGattService? = null
+    private var serviceLedstrip: BluetoothGattService? = null
     /** */
     private var charColor: BluetoothGattCharacteristic?  = null
     /** */
@@ -82,10 +80,6 @@ class BluetoothLeService: Service() {
     private var isReading:Boolean = false
     /** Идёт запись характеристики. Не трогать следующее значение в очереди */
     private var isWriting:Boolean = false
-    /** */
-    private var isScan:Boolean = false
-    /** Объект сканнера Bluetooth Low Energy устройств */
-    private lateinit var bluetoothLeScanner: BluetoothLeScanner
     /** Список обнаруженных устройств */
     private val bluetoothLeDevices = mutableListOf<BtLeDevice>()
     /** Объект устройства, к которому подключаемся */
@@ -95,6 +89,8 @@ class BluetoothLeService: Service() {
         get() = bluetoothLeDevices.toList()
     /** */
     private lateinit var settings:SharedPreferences
+    /** */
+    private var isConnected = false
 
 
     /** Получить текущее состояние сервиса */
@@ -126,49 +122,6 @@ class BluetoothLeService: Service() {
         }
     }
 
-    /**
-     * Объект-получатель сообщений от процесса сканирования Блютуз-устройств
-     * Такой вариант работает для версий >= 6.0
-     *
-     */
-    private val leScanCallback = object: ScanCallback() {
-        private val tag:String = "leScanCallback"
-
-        /**
-         * Добавляет в список устройство, если его нет в списке
-         * Если в списке устройства нет, вызывает broadcastFindDevice
-         * Чтобы оповестить все подписанные активности и фрагменты
-         * о том, что найдено устройство
-         */
-        fun addBtDevice(bluetoothDevice: BluetoothDevice) {
-            if(!bluetoothLeDevices.contains(bluetoothDevice)) {
-                bluetoothLeDevices.add(bluetoothDevice)
-                broadcastFindDevice(bluetoothDevice)
-            }
-        }
-
-        override fun onScanFailed(errorCode: Int) {
-            super.onScanFailed(errorCode)
-            Log.d(tag, "Ошибка сканирования: $errorCode")
-        }
-
-        override fun onBatchScanResults(results: MutableList<ScanResult>?) {
-            super.onBatchScanResults(results)
-            results?.forEach { result ->
-                Log.d(tag, "[BatchScan] Найдено устройство: ${result.device.address}")
-                addBtDevice(result.device)
-            }
-        }
-
-        override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            super.onScanResult(callbackType, result)
-            Log.d(tag, "[Scan] Найдено устройство: ${result?.device?.address}")
-            if(result != null && result.device != null) {
-                addBtDevice(result.device)
-            }
-        }
-    }
-
     /** Inner класс для обработки обратных вызовов событий Блютуз
      * После того, как функция широковещательной передачи установлена,
      * она используется внутри BluetoothGattCallbackдля отправки информации
@@ -188,26 +141,24 @@ class BluetoothLeService: Service() {
             when (newState) {
                 /** */
                 BluetoothProfile.STATE_DISCONNECTING -> {
-                    action = ACTION_GATT_DISCONNECTING
                     serviceState = STATE_DISCONNECTING
+                    isConnected = false
                 }
                 /** */
                 BluetoothProfile.STATE_DISCONNECTED -> {
-                    action = ACTION_GATT_DISCONNECTED
                     close()
                     Log.d(TAG, "Подключение закрыто")
                     serviceState = STATE_DISCONNECTED
-
+                    isConnected = false
                 }
                 /** */
                 BluetoothProfile.STATE_CONNECTING -> {
-                    action = ACTION_GATT_CONNECTING
                     serviceState = STATE_CONNECTING
+                    isConnected = false
                 }
 
                 /** */
                 BluetoothProfile.STATE_CONNECTED -> {
-                    action = ACTION_GATT_CONNECTED
                     serviceState = STATE_CONNECTED
                     Handler(Looper.getMainLooper()).postDelayed({
                         if(gatt!!.discoverServices()) {
@@ -216,15 +167,15 @@ class BluetoothLeService: Service() {
                             Log.d(TAG, "Ошибка. Не можем исследовать сервисы")
                         }
                     }, 1000)
+                    isConnected = false
                 }
                 /** */
                 else -> {
-                    action = ACTION_GATT_UNKNOWN
                     serviceState = STATE_UNKNOWN
                 }
             }
-            Log.d(gatCallBackTag, "Состояние подключения изменено на $action, статус: $status, новое состояние $newState")
-            broadcastUpdate(action)
+            Log.d(gatCallBackTag, "Состояние подключения изменено на статус: $status, новое состояние $newState")
+            stateChanged.postValue(serviceState)
         }
 
         /**
@@ -241,7 +192,17 @@ class BluetoothLeService: Service() {
                     logChar(characteristic)
                     isReading = false
                     nextReadQueue()
-                    broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
+                    stateChanged.postValue(STATE_DATA_READED)
+                    when (characteristic.uuid) {
+                        UUID_SERVICE_CHAR_COLOR -> {
+                            getColor.postValue(characteristic.value.toInt())
+                        }
+                        UUID_SERVICE_CHAR_REGIME -> {
+                            getRegime.postValue(characteristic.value.toInt())
+                        }
+                        else -> {
+                        }
+                    }
                 }
             }
         }
@@ -255,7 +216,7 @@ class BluetoothLeService: Service() {
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
             if (characteristic != null) {
-                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
+                stateChanged.postValue(STATE_DATA_AVAILABLE)
             }
         }
 
@@ -268,23 +229,24 @@ class BluetoothLeService: Service() {
                 Log.d(TAG, "Сервисы исследованы, status == GATT_SUCCESS, gatt = ${gatt.toString()}")
                 if(gatt != null) {
                     Log.d(TAG, "Получаем сервисы")
-                    serviceBlinker = gatt.getService(UUID_SERVICE_BLINKER)
-                    if(serviceBlinker != null) {
-                        serviceBlinker!!.characteristics.forEach { char ->
+                    serviceLedstrip = gatt.getService(UUID_SERVICE_BLINKER)
+                    if(serviceLedstrip != null) {
+                        serviceLedstrip!!.characteristics.forEach { char ->
                             Log.d(TAG, "${char.uuid}")
                         }
-                        charColor   = serviceBlinker!!.getCharacteristic(UUID_SERVICE_CHAR_COLOR)
-                        charRegime  = serviceBlinker!!.getCharacteristic(UUID_SERVICE_CHAR_REGIME)
-                        Log.d(TAG, "Сервис: ${serviceBlinker!!.uuid}, Цвет: ${charColor!!.uuid}, свойства ${charColor?.properties.toString()}")
-                        Log.d(TAG, "Сервис: ${serviceBlinker!!.uuid}, Режим: ${charRegime!!.uuid}")
-                        serviceState = STATE_DISCOVERED
+                        charColor   = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_COLOR)
+                        charRegime  = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_REGIME)
+                        Log.d(TAG, "Сервис: ${serviceLedstrip!!.uuid}, Цвет: ${charColor!!.uuid}, свойства ${charColor?.properties.toString()}")
+                        Log.d(TAG, "Сервис: ${serviceLedstrip!!.uuid}, Режим: ${charRegime!!.uuid}")
+                        serviceState = STATE_GATT_DISCOVERED
                         if((charColor?.properties?.and(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT))
                             == BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT ) {
                             Log.d(TAG, "Запись по умолчанию ${BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT}, signed: ${BluetoothGattCharacteristic.WRITE_TYPE_SIGNED}, ${BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE}")
                         }
                         charColor?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 
-                        broadcastUpdate(ACTION_GATT_DISCOVERED)
+                        stateChanged.postValue(STATE_GATT_DISCOVERED)
+                        isConnected = true
                     }
                 } else {
                     Log.d(TAG, "gatt == null")
@@ -304,6 +266,7 @@ class BluetoothLeService: Service() {
             status: Int
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
+            // Log.d(TAG, "Write characteristic: $characteristic")
             if(characteristic != null) {
                 isWriting = false
                 nextWriteQueue()
@@ -336,57 +299,6 @@ class BluetoothLeService: Service() {
     /**
      *
      */
-    inner class LocalLeServiceBinder: Binder() {
-        fun getService() : BluetoothLeService = this@BluetoothLeService
-    }
-
-    /**
-     *
-     */
-    override fun onBind(intent: Intent?): IBinder? {
-        return binder
-    }
-
-    /** Когда сервер подключается к серверу GATT или отключается от него, он должен уведомить
-     *  об активности о новом состоянии. Есть несколько способов добиться этого. В следующем
-     *  примере широковещательные рассылки используются для отправки информации из службы в действие.
-     *  Сервис объявляет функцию для трансляции нового состояния. Эта функция принимает строку
-     *  действия, которая передается Intent объекту перед трансляцией в систему.
-     *  https://developer.android.com/guide/topics/connectivity/bluetooth/connect-gatt-server
-     */
-    private fun broadcastUpdate(action:String) {
-        val intent = Intent(action)
-        sendBroadcast(intent)
-    }
-
-    /**
-     *
-     */
-    private fun broadcastFindDevice(bluetoothLeDevice: BluetoothDevice) {
-        val intent = Intent(ACTION_DEVICE_SCAN_FIND)
-        intent.putExtra(AppConst.btAddress, bluetoothLeDevice.address)
-        intent.putExtra(AppConst.btName, bluetoothLeDevice.name)
-        intent.putExtra(AppConst.btBound, bluetoothLeDevice.bondState)
-        sendBroadcast(intent)
-    }
-
-    /**
-     *
-     */
-    private fun broadcastUpdate(action:String, bluetoothGattCharacteristic: BluetoothGattCharacteristic) {
-        val intent = Intent(action)
-        if(UUID_SERVICE_CHAR_REGIME == bluetoothGattCharacteristic.uuid) {
-            intent.putExtra(REGIME_DATA, bluetoothGattCharacteristic.value.toInt())
-            sendBroadcast(intent)
-        } else if (UUID_SERVICE_CHAR_COLOR == bluetoothGattCharacteristic.uuid) {
-            intent.putExtra(COLOR_DATA, bluetoothGattCharacteristic.value.toInt())
-            sendBroadcast(intent)
-        }
-    }
-
-    /**
-     *
-     */
     override fun  onCreate() {
         initialize()
         super.onCreate()
@@ -398,6 +310,50 @@ class BluetoothLeService: Service() {
     override fun onDestroy() {
         super.onDestroy()
         applicationContext.unregisterReceiver(broadcastReceiver)
+    }
+
+    /** Binder given to clients */
+    private val binder = LocalBinder()
+
+    /**
+     * Class used for the client Binder.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with IPC.
+     */
+    inner class LocalBinder : Binder() {
+        // Return this instance of LocalService so clients can call public methods
+        fun getService(): BluetoothLeService = this@BluetoothLeService
+    }
+
+    /**
+     * Привязывание сервиса "штатным" BindService
+     * Вызывается, когда клиент (MainActivity в случае этого приложения) выходит на передний план
+     * и связывается с этой службой. Когда это произойдет, служба должна перестать быть службой
+     * переднего плана.
+     */
+    override fun onBind(intent: Intent): IBinder? {
+        super.onBind(intent)
+        stopForeground(true)
+        return binder
+    }
+
+    /**
+     * Привязывание сервиса "штатным" BindService
+     * Вызывается, когда клиент (MainActivity в случае этого приложения) выходит на передний план
+     * и связывается с этой службой. Когда это произойдет, служба должна перестать быть службой
+     * переднего плана.
+     */
+    override fun onRebind(intent: Intent) {
+        Log.d(TAG, "in onRebind()")
+        stopForeground(true)
+        super.onRebind(intent)
+    }
+
+    override fun onUnbind(intent: Intent): Boolean {
+        Log.d(TAG, "Last client unbound from service")
+        Log.d(TAG, "Starting foreground service")
+        // https://developer.android.com/training/notify-user/build-notification
+        // startForeground(NOTIFICATION_ID, getNotification())
+        return true // Ensures onRebind() is called when a client re-binds.
     }
 
     /**
@@ -436,7 +392,6 @@ class BluetoothLeService: Service() {
             if(::bluetoothManager.isInitialized) {
                 Log.d(TAG, "Инициализирую локальный адаптер")
                 bluetoothAdapter   = bluetoothManager.adapter
-                bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
 
                 if(!::bluetoothAdapter.isInitialized) {
                     Log.e(TAG, "Не могу получить Адаптер Блютуз")
@@ -574,7 +529,7 @@ class BluetoothLeService: Service() {
                 )
             }, AppConst.waitConnect)
             serviceState = STATE_CONNECTING
-            broadcastUpdate(ACTION_GATT_CONNECTING)
+            // broadcastUpdate(ACTION_GATT_CONNECTING)
         }
     }
 
@@ -638,10 +593,10 @@ class BluetoothLeService: Service() {
         }
         Log.w(TAG, "Отключаемся от устройства")
         bluetoothGatt!!.close()
-        serviceBlinker = null
-        charColor      = null
-        charRegime     = null
-        bluetoothGatt  = null
+        serviceLedstrip = null
+        charColor       = null
+        charRegime      = null
+        bluetoothGatt   = null
     }
 
     /**
@@ -682,20 +637,38 @@ class BluetoothLeService: Service() {
                 bluetoothGattCharacteristic.properties.and(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
                         == BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
     }
+
     /**
      *
      */
     @RequiresApi(Build.VERSION_CODES.M)
     private fun writeCharacteristic(bluetoothGattCharacteristic: BluetoothGattCharacteristic?, byteArray: ByteArray): Boolean {
-        if(state != STATE_CONNECTED) {
+        // Log.d(TAG, "isConnected: $isConnected")
+        if(isConnected) {
             if(bluetoothGatt != null && bluetoothGattCharacteristic != null) {
-                isWriting = true
                 bluetoothGattCharacteristic.value = byteArray
-                val res = bluetoothGatt!!.writeCharacteristic(bluetoothGattCharacteristic)
+                var res = bluetoothGatt!!.writeCharacteristic(bluetoothGattCharacteristic)
+                // Log.d(TAG, "Записана характеристика $isWriting: $byteArray, размер очереди ${queueWrite.size}")
+                var i = 0
+                while(res) {
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        res = bluetoothGatt!!.writeCharacteristic(bluetoothGattCharacteristic)
+                        i++
+                    }, 10)
+                    if(i >= REPEAT_WRITE_CHAR) {
+                        Log.e(TAG, "Ошибка записи характеристики $bluetoothGattCharacteristic")
+                        break
+                    }
 
-                if(!getNoResponse(bluetoothGattCharacteristic)) {
+                    if(res) break
+                }
+
+                isWriting = res
+
+                if(!getNoResponse(bluetoothGattCharacteristic) && res) {
                     nextWriteQueue()
                 }
+
                 return res
             }
         } else {
@@ -730,93 +703,11 @@ class BluetoothLeService: Service() {
                 writeCharacteristic(charRegime, next.second)
             }
             else -> {
-                Log.w(TAG, "Неизвестная характеристика $this")
+                Log.e(TAG, "Неизвестная характеристика ${next?.first.toString()}")
             }
         }
     }
 
-    /** Получить список подключённых Блютуз устройств
-     *  Paired Devices
-     */
-    fun getPairedDevices(): List<BtLeDevice> {
-        if(isScan) {
-            isScan = false
-            bluetoothLeScanner.stopScan(leScanCallback)
-        }
-        if(bluetoothAdapter.isEnabled) {
-            val pairedDevices:Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
-            if(pairedDevices.isNotEmpty()) {
-                return pairedDevices.toBtList()
-            }
-        }
-
-        return listOf()
-    }
-
-    /**
-     * Запуск сканирования BLE-устройств
-     * Фильтр по сервисам, пока не работает.
-     */
-    fun scanLeDevices() {
-        if(isScan) {
-            stopScan()
-            startScan()
-        } else {
-            startScan()
-        }
-    }
-
-    /**
-     * Запуск процесса сканирования
-     */
-    private fun startScan() {
-        broadcastUpdate(ACTION_DEVICE_SCAN_START)
-
-        val filterUUID = UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB")
-        Log.d(TAG, "Запуск сканирования $filterUUID")
-        bluetoothLeDevices.clear()
-
-        val scanSettings: ScanSettings = ScanSettings.Builder()
-            // .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
-            // .setScanMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-            .setScanMode(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-            // .setReportDelay(0L)
-            .build()
-        // bluetoothLeScanner.startScan( leScanCallback!!)
-        val filters:List<ScanFilter> = listOf(
-            // ScanFilter.Builder().setServiceUuid(ParcelUuid(UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB"))).build()
-            // ScanFilter.Builder().setServiceUuid(ParcelUuid(UUID.fromString(serviceUUID2))).build()
-            // ScanFilter.Builder().setServiceUuid(ParcelUuid(UUID.fromString(serviceUUID3))).build()
-            // ScanFilter.Builder().setServiceUuid(ParcelUuid(UUID.fromString(serviceUUID4))).build()
-            // ScanFilter.Builder().setDeviceName("ESP_BLE_SECURITY").build()
-            // ScanFilter.Builder().setServiceUuid(ParcelUuid(UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB"))).build()
-        )
-
-        bluetoothLeScanner.startScan(filters, scanSettings, leScanCallback)
-
-        isScan = true
-        serviceState = STATE_SCANNING
-
-        /**
-         * После истечения периода LSHelper.scanPeriod
-         * сканирование будет остановлено
-         */
-        Handler(Looper.getMainLooper()).postDelayed({
-            stopScan()
-        }, AppConst.scanPeriod)
-    }
-
-    /**
-     * Остановка процесса сканирования
-     * Забыл, зачем я тут задержку выставил?
-     */
-    fun stopScan() {
-        isScan = false
-        broadcastUpdate(ACTION_DEVICE_SCAN_STOP)
-        bluetoothLeScanner.stopScan(leScanCallback)
-        serviceState = STATE_UNKNOWN
-        Log.d(TAG, "Сканирование окончено")
-    }
 
     /**
      * Добавление метода add, так, чтобы преобразовывать BluetoothDevice

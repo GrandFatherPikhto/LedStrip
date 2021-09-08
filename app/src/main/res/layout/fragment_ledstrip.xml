@@ -10,7 +10,7 @@
     tools:context=".ui.ledstrip.LedstripFragment">
 
     <top.defaults.colorpicker.ColorPickerView
-        android:id="@+id/colorPickerView"
+        android:id="@+id/colorPicker"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:enableAlpha="false"
@@ -31,7 +31,7 @@
         aigestudio:layout_constraintEnd_toStartOf="@+id/btnDisable"
         aigestudio:layout_constraintHorizontal_bias="0.5"
         aigestudio:layout_constraintStart_toStartOf="parent"
-        aigestudio:layout_constraintTop_toBottomOf="@+id/colorPickerView" />
+        aigestudio:layout_constraintTop_toBottomOf="@+id/colorPicker" />
 
     <Button
         android:id="@+id/btnDisable"
@@ -42,6 +42,6 @@
         aigestudio:layout_constraintEnd_toEndOf="parent"
         aigestudio:layout_constraintHorizontal_bias="0.5"
         aigestudio:layout_constraintStart_toEndOf="@+id/regimePicker"
-        aigestudio:layout_constraintTop_toBottomOf="@+id/colorPickerView" />
+        aigestudio:layout_constraintTop_toBottomOf="@+id/colorPicker" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

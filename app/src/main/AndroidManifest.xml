@@ -30,6 +30,7 @@
             </intent-filter>
         </activity>
         <service android:name=".service.BluetoothLeService" android:enabled="true" />
+        <service android:name=".service.BluetoothLeScanService" android:enabled="true" />
     </application>
 
 </manifest>

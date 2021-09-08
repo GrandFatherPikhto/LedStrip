@@ -1,6 +1,7 @@
 package com.grandfatherpikhto.ledstrip.ui.scan
 
 import android.bluetooth.BluetoothDevice
+import android.content.Intent
 import android.content.*
 import android.os.Bundle
 import android.os.IBinder
@@ -15,6 +16,7 @@ import com.grandfatherpikhto.ledstrip.ui.MainActivity
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.FragmentScanBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
+import com.grandfatherpikhto.ledstrip.service.BluetoothLeScanService
 import com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter.BtLeDevice
 import com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter.RvBtDeviceAdapter
 import com.grandfatherpikhto.ledstrip.ui.scan.rvbtdadapter.RvBtDeviceCallback
@@ -29,10 +31,9 @@ class ScanFragment : Fragment() {
         const val TAG:String = "ScanFragment"
     }
 
+    /** */
     private var _binding: FragmentScanBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    /** Это свойство действительно только между onCreateView и onDestroyView */
     private val binding get() = _binding!!
     /** Адаптер списка для отображения списка сопряжённых или найденных устройств */
     private lateinit var rvBtDeviceAdapter: RvBtDeviceAdapter
@@ -41,61 +42,7 @@ class ScanFragment : Fragment() {
     /** */
     private lateinit var settings: SharedPreferences
     /** */
-    private var isBound:Boolean = false
-    /** Объект сервиса, к которому подключаемся */
-    private var bluetoothLeService:BluetoothLeService? = null
-    /**
-     * Получатель широковещательных сообщений
-     **/
-    private val broadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action!!) {
-                BluetoothLeService.ACTION_DEVICE_SCAN_START -> {
-                    rvBtDeviceAdapter.clearBtDevices()
-                    Log.d("SCAN_START", "Начато сканирование")
-                }
-                BluetoothLeService.ACTION_DEVICE_SCAN_STOP -> {
-                    Log.d("SCAN_STOP", "Сканирование остановлено")
-                }
-                BluetoothLeService.ACTION_DEVICE_SCAN_FIND -> {
-                    val btDevice = BtLeDevice(
-                        intent.getStringExtra(AppConst.btAddress) ?: context!!.getString(R.string.default_bt_device_address),
-                        intent.getStringExtra(AppConst.btName) ?: context!!.getString(R.string.default_bt_device_name),
-                        intent.getIntExtra(AppConst.btBound, -1)
-                    )
-                    Log.d("SCAN_FIND", "Найдено устройство $btDevice")
-                    rvBtDeviceAdapter.addBtDevice(btDevice)
-                }
-            }
-        }
-    }
-
-    /** Объект подключения к сервису */
-    private val serviceBluetoothLeConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as BluetoothLeService.LocalLeServiceBinder
-            bluetoothLeService = binder.getService()
-            if(bluetoothLeService != null) {
-                if(bluetoothLeService!!.state == BluetoothLeService.STATE_SCANNING) {
-                    rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.devices)
-                    Log.d(TAG, "Устанавливаем список уже найденных устройств")
-                    if(bluetoothLeService?.state != BluetoothLeService.STATE_SCANNING) {
-                        bluetoothLeService?.scanLeDevices()
-                    }
-                } else {
-                    rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.getPairedDevices())
-                    Log.d(TAG, "Устанавливаем список сопряжённых устройств")
-                }
-                Log.e(MainActivity.TAG, "service Connected")
-            }
-        }
-
-        override fun onServiceDisconnected(p0: ComponentName?) {
-            bluetoothLeService = null
-            Log.e(MainActivity.TAG, "service Disconnected")
-        }
-    }
-
+    private var isScan: Boolean = false
 
 
     override fun onCreateView(
@@ -110,7 +57,7 @@ class ScanFragment : Fragment() {
         setHasOptionsMenu(true)
         loadPreferences()
         bindRvBtDevices()
-        doBindBluetoothLeService()
+        setObservers()
 
         return binding.root
 
@@ -119,63 +66,53 @@ class ScanFragment : Fragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.menu_scan, menu)
+        Log.e(TAG, "onCreateOptionsMenu")
     }
 
     /**
      * Обработка событий меню
      */
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when(item.itemId) {
+    override fun onOptionsItemSelected(menuItem: MenuItem): Boolean {
+        return when(menuItem.itemId) {
             R.id.itemPairedBtDevices -> {
-                rvBtDeviceAdapter.setBtDevicesList(bluetoothLeService!!.getPairedDevices())
+                sendCommandToScanService(BluetoothLeScanService.ACTION_PAIRED_DEVICES)
                 return true
             }
             R.id.itemScanBtDevices -> {
-                bluetoothLeService?.scanLeDevices()
+                startScan(menuItem)
                 return true
             }
-            else -> super.onOptionsItemSelected(item)
+            else -> super.onOptionsItemSelected(menuItem)
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        doUnbindBluetoothLeService()
         _binding = null
     }
 
-    override fun onPause() {
-        requireContext().unregisterReceiver(broadcastReceiver)
-        super.onPause()
+    private fun saveDevice(btLeDevice: BtLeDevice) {
+        //if(settings.getBoolean(AppConst.saveDevice, true)) {
+        val editor: SharedPreferences.Editor = preferences.edit()
+        editor.putString(AppConst.btName, btLeDevice.name)
+        editor.putString(AppConst.btAddress, btLeDevice.address)
+        editor.apply()
+        //}
     }
 
-    override fun onResume() {
-        requireContext().registerReceiver(broadcastReceiver, makeIntentFilter())
-        super.onResume()
-    }
-
+    /**
+     * Вызываем подключение к устройству после долгого клика
+     */
     private fun connectBTDevice(btLeDevice: BtLeDevice) {
         Log.d(TAG, "Подключаемся к устройству ${btLeDevice.name}")
-        if(bluetoothLeService?.state == BluetoothLeService.STATE_SCANNING) {
-            bluetoothLeService?.stopScan()
-        }
-
-        if(settings.getBoolean(AppConst.saveDevice, true)) {
-            val editor: SharedPreferences.Editor = preferences.edit()
-            editor.putString(AppConst.btName, btLeDevice.name)
-            editor.putString(AppConst.btAddress, btLeDevice.address)
-            editor.apply()
-        }
-
-        if(bluetoothLeService?.state == BluetoothLeService.STATE_SCANNING) {
-            bluetoothLeService?.stopScan()
-        }
+        sendCommandToScanService(BluetoothLeScanService.ACTION_STOP_SCAN)
+        saveDevice(btLeDevice)
 
         findNavController().navigate(R.id.action_ScanFragment_to_LedstripFragment)
     }
 
     /**
-     *
+     * Привязать события клика к элементам списка
      */
     private fun bindRvBtDevices() {
         binding.apply {
@@ -200,45 +137,57 @@ class ScanFragment : Fragment() {
         }
     }
 
+    /**
+     * Загружаем предпочтения. Не лучший метод, но самый простой
+     */
     private fun loadPreferences() {
         preferences = requireContext().getSharedPreferences(AppConst.btPrefs, Context.MODE_PRIVATE)!!
         settings    = PreferenceManager.getDefaultSharedPreferences(requireContext())
     }
 
     /**
-     * Привязывание сервиса
+     * Прицепляемся к событиям
      */
-    private fun doBindBluetoothLeService() {
-        if (!isBound) {
-            Intent(context, BluetoothLeService::class.java).also { intent ->
-                isBound = requireContext().bindService(
-                    intent,
-                    serviceBluetoothLeConnection,
-                    Context.BIND_AUTO_CREATE
-                )
-                Log.d(TAG, "Привязка сервиса serviceBluetoothLeConnection")
+    private fun setObservers() {
+        BluetoothLeScanService.devicesList.observe(viewLifecycleOwner, { btLeDevicesList ->
+            rvBtDeviceAdapter.setBtDevices(btLeDevicesList)
+        })
+        BluetoothLeScanService.changeState.observe(viewLifecycleOwner, { state ->
+            when (state) {
+                BluetoothLeScanService.STATE_STARTED_SCAN-> {
+                    isScan = true
+                }
+                BluetoothLeScanService.STATE_STOPPED_SCAN -> {
+                    isScan = false
+                }
+                else -> {
+                }
             }
-            requireContext().registerReceiver(broadcastReceiver, makeIntentFilter())
+        })
+        BluetoothLeScanService.pairedDevicesList.observe(viewLifecycleOwner, { btPairedDevicesList ->
+            rvBtDeviceAdapter.setBtDevices(btPairedDevicesList)
+        })
+    }
+
+    /**
+     *
+     */
+    private fun startScan(scanMenuItem: MenuItem) {
+        if(isScan) {
+            sendCommandToScanService(BluetoothLeScanService.ACTION_STOP_SCAN)
+            scanMenuItem.setIcon(R.drawable.ic_baseline_search_24)
+        } else {
+            sendCommandToScanService(BluetoothLeScanService.ACTION_START_OR_RESUME_SCAN)
+            scanMenuItem.setIcon(R.drawable.ic_baseline_search_off_24)
         }
     }
 
     /**
-     * Отвязывание сервиса
+     * Отправляем команду сервису.
      */
-    private fun doUnbindBluetoothLeService() {
-        Log.d(TAG, "Сервис связан: $isBound")
-        if (isBound) {
-            context?.unbindService(serviceBluetoothLeConnection)
-            isBound = false
-        }
-    }
-
-    private fun makeIntentFilter(): IntentFilter {
-        val intentFilter = IntentFilter()
-        intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_SCAN_STOP)
-        intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_SCAN_START)
-        intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_SCAN_FIND)
-        intentFilter.addAction(BluetoothLeService.ACTION_DEVICE_SCAN_BATCH_FIND)
-        return intentFilter
+    private fun sendCommandToScanService(action: String) {
+        requireContext().startService(Intent(requireContext(), BluetoothLeScanService::class.java).apply{
+            this.action = action
+        })
     }
 }

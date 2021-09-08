@@ -25,6 +25,7 @@ import androidx.navigation.fragment.findNavController
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.ActivityMainBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
+import com.grandfatherpikhto.ledstrip.service.BluetoothLeScanService
 import com.grandfatherpikhto.ledstrip.service.BluetoothLeService
 
 class MainActivity : AppCompatActivity() {
@@ -45,56 +46,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navHost:NavHostFragment
     private lateinit var navController:NavController
 
-
-    /** */
-    private var isBound:Boolean = false
-    /** Объект сервиса, к которому подключаемся */
-    private var bluetoothLeService: BluetoothLeService? = null
-
-    /**
-     * Получатель широковещательных сообщений
-     **/
-    private val broadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-        }
-    }
-
-    /** Объект подключения к сервису */
-    private val serviceBluetoothLeConnection = object : ServiceConnection {
-        /**
-         *
-         */
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as BluetoothLeService.LocalLeServiceBinder
-            bluetoothLeService = binder.getService()
-            Log.d(TAG, "Сервис подключён ${name.toString()}")
-        }
-
-        /**
-         *
-         */
-        override fun onServiceDisconnected(name: ComponentName?) {
-            bluetoothLeService = null
-            Log.d(TAG, "Сервис отключён ${name.toString()}")
-        }
-
-        /**
-         *
-         */
-        override fun onBindingDied(name: ComponentName?) {
-            super.onBindingDied(name)
-            Log.d(TAG, "Привязка пала ${name.toString()}")
-        }
-
-        /**
-         *
-         */
-        override fun onNullBinding(name: ComponentName?) {
-            super.onNullBinding(name)
-            Log.d(TAG, "Нулевой биндинг $name")
-        }
-    }
-
     /**
      *
      */
@@ -108,29 +59,6 @@ class MainActivity : AppCompatActivity() {
 
         loadPreferences()
         setStartNavigate()
-
-        doBindBluetoothLeService()
-
-        /*
-        binding.fab.setOnClickListener { view ->
-            bluetoothLeService?.scanLeDevices()
-            when(navController.currentDestination?.id) {
-                R.id.LedstripFragment -> {
-                    navController.navigate(R.id.action_LedstripFragment_to_ScanFragment)
-                }
-                R.id.ScanFragment -> {
-                    /** Запустить повторное сканирование */
-                    val fragment = supportFragmentManager
-                        .findFragmentById(R.id.nav_host_fragment_content_main)
-                        ?.childFragmentManager
-                        ?.findFragmentById(R.id.nav_host_fragment_content_main)
-                    if(fragment != null) {
-                        Snackbar.make(view, "Запущено повторное сканирование", Snackbar.LENGTH_LONG)
-                            .setAction("Сканирование", null).show()
-                    }
-                }
-            }
-        } */
 
         requestPermissions(
             arrayListOf(
@@ -150,16 +78,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Обработка событий меню. Если вернуть false,
-     * обработка будет передана дальше. Например,
-     * если выберем отображение списка устройств,
-     * во фрагменте ScanFragment клик по этому
-     * меню будет тоже обработан.
+     * Обработка событий меню. Если вернуть false, обработка будет передана дальше.  Например,
+     * если выберем отображение списка  устройств,во фрагменте ScanFragment клик по этому меню
+     * будет тоже обработан.
+     * Здесь обрабатываются щелчки по элементам панели действий. Панель действий будет
+     * автоматически обрабатывать нажатия кнопки «Домой/Вверх», если вы укажете родительское
+     * действие в AndroidManifest.xml.
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.itemOptions -> {
                 navController.navigate(R.id.SettingsFragment)
@@ -185,30 +111,6 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration)
                 || super.onSupportNavigateUp()
-    }
-
-    /**
-     *
-     */
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(broadcastReceiver, makeIntentFilter())
-    }
-
-    /**
-     *
-     */
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(broadcastReceiver)
-    }
-
-    /**
-     *
-     */
-    override fun onDestroy() {
-        super.onDestroy()
-        doUnbindBluetoothLeService()
     }
 
     /**
@@ -271,47 +173,12 @@ class MainActivity : AppCompatActivity() {
         navController   = navHost.findNavController()
         val graph = navController.navInflater.inflate(R.navigation.nav_graph)
         if(btDeviceAddress.isEmpty() || btDeviceAddress == getString(R.string.default_bt_device_address)) {
-            graph.startDestination = R.id.ScanFragment
-            navController.graph = graph
-            Log.d(TAG, "DeviceAddress: $btDeviceAddress")
+//            graph.startDestination = R.id.ScanFragment
+//            navController.graph = graph
+//            Log.d(TAG, "DeviceAddress: $btDeviceAddress")
         }
         appBarConfiguration = AppBarConfiguration(graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
-    }
-
-    /**
-     * Привязывание сервиса
-     */
-    private fun doBindBluetoothLeService() {
-        //if (!isBound) {
-            Intent(this, BluetoothLeService::class.java).also { intent ->
-                isBound = bindService(
-                    intent,
-                    serviceBluetoothLeConnection,
-                    Context.BIND_AUTO_CREATE
-                )
-                Log.d(TAG, "doBindBluetoothLeService() Привязка сервиса serviceBluetoothLeConnection")
-            }
-            registerReceiver(broadcastReceiver, makeIntentFilter())
-        //}
-    }
-
-    /**
-     * Отвязывание сервиса
-     */
-    private fun doUnbindBluetoothLeService() {
-        Log.d(TAG, "Сервис связан: $isBound")
-        //if (isBound) {
-            unbindService(serviceBluetoothLeConnection)
-            isBound = false
-        //}
-    }
-
-    /**
-     * Заглушка
-     */
-    private fun makeIntentFilter(): IntentFilter {
-        return IntentFilter()
     }
 
     /**
