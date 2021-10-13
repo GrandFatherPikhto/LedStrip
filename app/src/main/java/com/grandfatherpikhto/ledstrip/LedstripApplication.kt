@@ -1,7 +1,11 @@
 package com.grandfatherpikhto.ledstrip
 
 import android.app.Application
+import android.content.Context
+import android.content.Intent
 import android.util.Log
+import com.grandfatherpikhto.ledstrip.service.BtLeService
+import com.grandfatherpikhto.ledstrip.service.BtLeServiceConnector
 
 class LedstripApplication: Application() {
     companion object {
@@ -14,7 +18,7 @@ class LedstripApplication: Application() {
     }
 
     override fun onTerminate() {
-        super.onTerminate()
         Log.d(TAG, "onTerminate()")
+        super.onTerminate()
     }
 }

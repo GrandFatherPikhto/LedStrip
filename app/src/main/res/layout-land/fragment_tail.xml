@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.ledstrip.TailFragment">
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout2"
+        android:layout_width="340dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/pickerTail"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swEnableTail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/switchEnable"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/slTailWidth" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/slTailSpeed"
+            android:layout_width="340dp"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/tvTailSpeed"
+            android:value="50"
+            android:valueFrom="10"
+            android:valueTo="100"
+            app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/svbarTail" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/slTailWidth"
+            android:layout_width="340dp"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/tvTailWidth"
+            android:value="25"
+            android:valueFrom="5"
+            android:valueTo="100"
+            app:layout_constraintBottom_toTopOf="@+id/swEnableTail"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/slTailSpeed" />
+
+        <com.larswerkman.holocolorpicker.SVBar
+            android:id="@+id/svbarTail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvTitleTail" />
+
+        <TextView
+            android:id="@+id/tvTitleTail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tvTitleTail"
+            android:textSize="34sp"
+            app:layout_constraintBottom_toTopOf="@+id/svbarTail"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvTailSpeed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tvTailSpeed"
+            app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.07"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/svbarTail"
+            app:layout_constraintVertical_bias="0.71000004" />
+
+        <TextView
+            android:id="@+id/tvTailWidth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tvTailWidth"
+            app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.09"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/slTailSpeed" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.larswerkman.holocolorpicker.ColorPicker
+        android:id="@+id/pickerTail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/constraintLayout2"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
