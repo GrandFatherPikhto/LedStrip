@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate()")
 
         sharedPreferences = getSharedPreferences(AppConst.PREFERENCES, Context.MODE_PRIVATE).apply {
             deviceAddress = getString(
@@ -68,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         requestPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-
+        doBindServices()
         navigateStart()
     }
 
@@ -107,20 +108,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        Intent(this, BtLeService::class.java).also { intent ->
-            Log.d(LedstripApplication.TAG, "Привязываем сервис")
-            bindService(intent, BtLeServiceConnector, Context.BIND_AUTO_CREATE)
-        }
-        Intent(this, BtLeScanService::class.java).also { intent ->
-            Log.d(LedstripApplication.TAG, "Привязываем сервис")
-            bindService(intent, BtLeScanServiceConnector, Context.BIND_AUTO_CREATE)
-        }
+        doBindServices()
+        bindNavigate()
     }
 
     override fun onStop() {
         super.onStop()
-        unbindService(BtLeServiceConnector)
-        unbindService(BtLeScanServiceConnector)
+        doUnbindServices()
     }
 
     private fun requestPermission(permission: String) {
@@ -194,40 +188,69 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun bindNavigate() {
+        lifecycleScope.launch {
+            BtLeServiceConnector.service.collect { service ->
+                if (service != null) {
+                    Log.d(TAG, "Сервис виден")
+                    BtLeServiceConnector.state.collect { state ->
+                        when (state) {
+                            BtLeService.State.Disconnected -> {
+                                Log.d(TAG, "Disconnected")
+                                if (navController.currentDestination?.id != R.id.SplashFragment
+                                    && deviceAddress != getString(R.string.default_device_address)
+                                ) {
+                                    navController.navigate(R.id.SplashFragment)
+                                }
+                            }
+                            BtLeService.State.Discovered -> {
+                                if (navController.currentDestination?.id != R.id.ContainerFragment
+                                    && deviceAddress != getString(R.string.default_device_address)
+                                ) {
+                                    navController.navigate(R.id.ContainerFragment)
+                                }
+                            }
+                            else -> {
+                                if(navController.currentDestination?.id != R.id.ScanFragment
+                                    && deviceAddress == getString(R.string.default_device_address)) {
+                                    navController.navigate(R.id.ScanFragment)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private fun navigateStart() {
         Log.d(TAG, deviceAddress)
         lifecycleScope.launch {
             if (deviceAddress == getString(R.string.default_device_address)
                 && navController.currentDestination?.id != R.id.ScanFragment
             ) {
-                if(navController.currentDestination?.id != R.id.ScanFragment) {
+                if (navController.currentDestination?.id != R.id.ScanFragment) {
                     navController.navigate(R.id.ScanFragment)
                 }
             }
-            BtLeServiceConnector.state.collect { state ->
-                when (state) {
-                    BtLeService.State.Disconnected -> {
-                        if (navController.currentDestination?.id != R.id.SplashFragment
-                            && deviceAddress != getString(R.string.default_device_address)
-                        ) {
-                            navController.navigate(R.id.SplashFragment)
-                        }
-                    }
-                    BtLeService.State.Discovered -> {
-                        if (navController.currentDestination?.id != R.id.ContainerFragment
-                            && deviceAddress != getString(R.string.default_device_address)
-                        ) {
-                            navController.navigate(R.id.ContainerFragment)
-                        }
-                    }
-                    else -> {
-                        if(navController.currentDestination?.id != R.id.ScanFragment
-                            && deviceAddress == getString(R.string.default_device_address)) {
-                            navController.navigate(R.id.ScanFragment)
-                        }
-                    }
-                }
-            }
         }
+    }
+
+    private fun doBindServices() {
+        Log.d(TAG, "doBindServices()")
+        Intent(this, BtLeService::class.java).also { intent ->
+            Log.d(LedstripApplication.TAG, "Привязываем сервис")
+            bindService(intent, BtLeServiceConnector, Context.BIND_AUTO_CREATE)
+        }
+        Intent(this, BtLeScanService::class.java).also { intent ->
+            Log.d(LedstripApplication.TAG, "Привязываем сервис")
+            bindService(intent, BtLeScanServiceConnector, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    private fun doUnbindServices() {
+        Log.d(TAG, "doUnbindServices()")
+        unbindService(BtLeServiceConnector)
+        unbindService(BtLeScanServiceConnector)
     }
 }

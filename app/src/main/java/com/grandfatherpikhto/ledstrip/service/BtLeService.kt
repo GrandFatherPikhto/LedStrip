@@ -304,6 +304,9 @@ class BtLeService:Service() {
 
     override fun onBind(p0: Intent?): IBinder? {
         Log.d(TAG, "Сервис связан")
+        GlobalScope.launch {
+            sharedState.tryEmit(State.Disconnected)
+        }
         return binder
     }
 
