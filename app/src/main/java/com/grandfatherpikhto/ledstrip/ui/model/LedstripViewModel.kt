@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.service.BtLeServiceConnector
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
 
@@ -73,11 +74,13 @@ class LedstripViewModel:ViewModel() {
         }
     }
 
+    @DelicateCoroutinesApi
     fun changeRegime(value:BtLeService.Regime) {
         _regime.value = value
         service?.writeRegime(value)
     }
 
+    @DelicateCoroutinesApi
     fun changeColor(value:Int) {
         _color.value = value
         service?.writeColor(value)
