@@ -1,5 +1,6 @@
 package com.grandfatherpikhto.ledstrip.ui.model
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -10,6 +11,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
 
 class LedstripViewModel:ViewModel() {
+    companion object {
+        const val TAG = "LedstripViewModel"
+    }
+
     private var service:BtLeService ?= null
 
     private val _state = MutableLiveData<BtLeService.State> ()
@@ -69,17 +74,13 @@ class LedstripViewModel:ViewModel() {
     }
 
     fun changeRegime(value:BtLeService.Regime) {
-        if(_regime.value != value) {
-            _regime.value = value
-            service?.writeRegime(value)
-        }
+        _regime.value = value
+        service?.writeRegime(value)
     }
 
     fun changeColor(value:Int) {
-        if(_color.value != value) {
-            _color.value = value
-            service?.writeColor(value)
-        }
+        _color.value = value
+        service?.writeColor(value)
     }
 
     fun changeBlinkFrequency(value:Float) {

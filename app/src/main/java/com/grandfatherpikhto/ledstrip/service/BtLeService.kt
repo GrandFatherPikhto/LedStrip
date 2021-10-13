@@ -242,8 +242,8 @@ class BtLeService:Service() {
     /** Binder given to clients */
     private val binder = LocalBinder()
 
-    private val regimeChannel = Channel<Regime> (capacity = BUFFER_COLOR_CAPACITY,  onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val colorChannel  = Channel<Int>    (capacity = BUFFER_REGIME_CAPACITY, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val regimeChannel = Channel<Regime> (capacity = BUFFER_REGIME_CAPACITY,  onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val colorChannel  = Channel<Int>    (capacity = BUFFER_COLOR_CAPACITY,   onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val charWriteMutex = Mutex()
 
     /**
@@ -284,7 +284,9 @@ class BtLeService:Service() {
             if(bluetoothGatt != null && bluetoothGattCharacteristic != null) {
                 charWriteMutex.lock()
                 bluetoothGattCharacteristic.value = value
-                return bluetoothGatt!!.writeCharacteristic(bluetoothGattCharacteristic)
+                val res = bluetoothGatt!!.writeCharacteristic(bluetoothGattCharacteristic)
+                Log.d(TAG, "Записана характеристика ${bluetoothGattCharacteristic.uuid}: $res")
+                return res
             }
         }
 

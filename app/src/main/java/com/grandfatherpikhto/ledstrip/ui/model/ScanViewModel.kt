@@ -26,9 +26,11 @@ class ScanViewModel:ViewModel() {
     init {
         viewModelScope.launch {
             BtLeScanServiceConnector.device.collect { device ->
-                devicesList.add(device)
                 Log.d(TAG, "Получено устройство $device")
-                _devices.postValue(devicesList.toList())
+                if(devicesList.find { it.address == device.address } == null) {
+                    devicesList.add(device)
+                    _devices.postValue(devicesList.toList())
+                }
             }
         }
 

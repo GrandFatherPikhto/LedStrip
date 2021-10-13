@@ -17,16 +17,14 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import com.grandfatherpikhto.ledstrip.LedstripApplication
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.ActivityMainBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
-import com.grandfatherpikhto.ledstrip.service.BtLeScanService
-import com.grandfatherpikhto.ledstrip.service.BtLeScanServiceConnector
-import com.grandfatherpikhto.ledstrip.service.BtLeService
-import com.grandfatherpikhto.ledstrip.service.BtLeServiceConnector
+import com.grandfatherpikhto.ledstrip.service.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
 
@@ -38,19 +36,27 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-    private lateinit var navController:NavController
+    private lateinit var navController: NavController
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var deviceAddress:String
-    private lateinit var deviceName:String
+    private lateinit var deviceAddress: String
+    private lateinit var deviceName: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         sharedPreferences = getSharedPreferences(AppConst.PREFERENCES, Context.MODE_PRIVATE).apply {
-            deviceAddress = getString(AppConst.DEVICE_ADDRESS, getString(R.string.default_device_address)).toString()
+            deviceAddress = getString(
+                AppConst.DEVICE_ADDRESS,
+                getString(R.string.default_device_address)
+            ).toString()
             deviceAddress = ADDRESS
-            deviceName    = getString(AppConst.DEVICE_NAME, getString(R.string.default_device_name)).toString()
+            deviceName =
+                getString(AppConst.DEVICE_NAME, getString(R.string.default_device_name)).toString()
         }
+//        deviceAddress = getString(R.string.default_device_address)
+//        sharedPreferences.edit {
+//            putString(AppConst.DEVICE_ADDRESS, deviceAddress)
+//        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -61,12 +67,7 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        requestPermissions(
-            arrayListOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
-        )
+        requestPermission(Manifest.permission.ACCESS_FINE_LOCATION)
 
         navigateStart()
     }
@@ -83,13 +84,13 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.itemDevicesList -> {
-                if(navController.currentDestination?.id != R.id.ScanFragment) {
+                if (navController.currentDestination?.id != R.id.ScanFragment) {
                     navController.navigate(R.id.ScanFragment)
                 }
                 true
             }
             R.id.action_settings -> {
-                if(navController.currentDestination?.id != R.id.SettingsFragment) {
+                if (navController.currentDestination?.id != R.id.SettingsFragment) {
                     navController.navigate(R.id.SettingsFragment)
                 }
                 true
@@ -122,6 +123,34 @@ class MainActivity : AppCompatActivity() {
         unbindService(BtLeScanServiceConnector)
     }
 
+    private fun requestPermission(permission: String) {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                permission
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            val launcher =
+                registerForActivityResult(ActivityResultContracts.RequestPermission()) { result: Boolean ->
+                    if (result) {
+                        Toast.makeText(
+                            this,
+                            "Разрешение на $permission получено",
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
+                    } else {
+                        Toast.makeText(
+                            this,
+                            "Разрешение на $permission не дано",
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
+                    }
+                }
+            launcher.launch(permission)
+        }
+    }
+
     /**
      * Проверка группы разрешений
      */
@@ -130,7 +159,8 @@ class MainActivity : AppCompatActivity() {
         permissions.forEach { permission ->
             if (ContextCompat.checkSelfPermission(
                     this,
-                    permission) == PackageManager.PERMISSION_GRANTED
+                    permission
+                ) == PackageManager.PERMISSION_GRANTED
             ) {
                 Log.d(TAG, "Разрешение на $permission уже есть")
             } else {
@@ -144,8 +174,8 @@ class MainActivity : AppCompatActivity() {
     /**
      * Запрос группы разрешений
      */
-    private fun permissionsLauncher(permissions:List<String>) {
-        if(permissions.isNotEmpty()) {
+    private fun permissionsLauncher(permissions: List<String>) {
+        if (permissions.isNotEmpty()) {
             val launcher =
                 registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
                     results?.entries?.forEach { result ->
@@ -165,29 +195,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun navigateStart() {
+        Log.d(TAG, deviceAddress)
         lifecycleScope.launch {
+            if (deviceAddress == getString(R.string.default_device_address)
+                && navController.currentDestination?.id != R.id.ScanFragment
+            ) {
+                if(navController.currentDestination?.id != R.id.ScanFragment) {
+                    navController.navigate(R.id.ScanFragment)
+                }
+            }
             BtLeServiceConnector.state.collect { state ->
-                if (navController.currentDestination?.id != R.id.ScanFragment) {
-                    if (state == BtLeService.State.Discovered) {
-//                        if (navController.currentDestination?.id != R.id.ContainerFragment) {
-//                            navController.popBackStack()
-//                            navController.navigate(R.id.ContainerFragment)
-//                        }
-                    } else {
-                        if (navController.currentDestination?.id != R.id.SplashFragment) {
+                when (state) {
+                    BtLeService.State.Disconnected -> {
+                        if (navController.currentDestination?.id != R.id.SplashFragment
+                            && deviceAddress != getString(R.string.default_device_address)
+                        ) {
                             navController.navigate(R.id.SplashFragment)
+                        }
+                    }
+                    BtLeService.State.Discovered -> {
+                        if (navController.currentDestination?.id != R.id.ContainerFragment
+                            && deviceAddress != getString(R.string.default_device_address)
+                        ) {
+                            navController.navigate(R.id.ContainerFragment)
+                        }
+                    }
+                    else -> {
+                        if(navController.currentDestination?.id != R.id.ScanFragment
+                            && deviceAddress == getString(R.string.default_device_address)) {
+                            navController.navigate(R.id.ScanFragment)
                         }
                     }
                 }
             }
         }
-        if(deviceAddress != getString(R.string.default_device_address)) {
-            if ( navController.currentDestination?.id != R.id.ScanFragment
-                && BtLeServiceConnector.state.value != BtLeService.State.Discovered
-                && navController.currentDestination?.id != R.id.SplashFragment
-            ) {
-                navController.navigate(R.id.SplashFragment)
-            }
-        }
-   }
+    }
 }

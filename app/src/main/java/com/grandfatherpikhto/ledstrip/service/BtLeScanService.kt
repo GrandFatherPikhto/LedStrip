@@ -67,6 +67,7 @@ class BtLeScanService: Service() {
      * Такой вариант работает для версий >= 6.0
      *
      */
+    @DelicateCoroutinesApi
     private val leScanCallback = object: ScanCallback() {
         private val tag:String = "leScanCallback"
 
@@ -114,7 +115,10 @@ class BtLeScanService: Service() {
             super.onBatchScanResults(results)
             results?.forEach { result ->
                 Log.d(tag, "[BatchScan] Найдено устройство: ${result.device.address}")
-                addBtDevice(result.device)
+                // addBtDevice(result.device)
+                GlobalScope.launch {
+                    sharedDevice.tryEmit(result.device.toBtLeDevice())
+                }
             }
         }
 
@@ -125,7 +129,10 @@ class BtLeScanService: Service() {
             super.onScanResult(callbackType, result)
             Log.d(tag, "[Scan] Найдено устройство: ${result?.device?.address}")
             if(result != null && result.device != null) {
-                addBtDevice(result.device)
+                // addBtDevice(result.device)
+                GlobalScope.launch {
+                    sharedDevice.tryEmit(result.device.toBtLeDevice())
+                }
             }
         }
     }

@@ -21,6 +21,7 @@ import com.grandfatherpikhto.ledstrip.service.BtLeServiceConnector
 import com.grandfatherpikhto.ledstrip.ui.adapter.ContainerPagerAdapter
 import com.grandfatherpikhto.ledstrip.ui.control.*
 import com.grandfatherpikhto.ledstrip.ui.model.ContainerViewModel
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -81,6 +82,7 @@ class ContainerFragment : Fragment() {
         return binding.root
     }
 
+    @DelicateCoroutinesApi
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onStart() {
         super.onStart()
@@ -91,9 +93,12 @@ class ContainerFragment : Fragment() {
     }
 
 
+    @DelicateCoroutinesApi
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onStop() {
         super.onStop()
         Log.d(TAG, "onStop()")
+        BtLeServiceConnector.service.value?.close()
         sharedPreferences.edit {
             putInt(CURRENT_PAGE, containerViewModel.page.value!!)
             commit()
@@ -108,7 +113,6 @@ class ContainerFragment : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        BtLeServiceConnector.service.value?.close()
         Log.d(TAG, "onDestroy()")
     }
 }

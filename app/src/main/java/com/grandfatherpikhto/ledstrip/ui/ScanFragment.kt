@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.core.content.edit
 import androidx.fragment.app.viewModels
@@ -21,6 +22,7 @@ import com.grandfatherpikhto.ledstrip.service.BtLeServiceConnector
 import com.grandfatherpikhto.ledstrip.ui.adapter.RvBtDevicesAdapter
 import com.grandfatherpikhto.ledstrip.ui.adapter.RvBtDevicesCallback
 import com.grandfatherpikhto.ledstrip.ui.model.ScanViewModel
+import kotlinx.coroutines.DelicateCoroutinesApi
 
 class ScanFragment : Fragment() {
     companion object {
@@ -52,7 +54,10 @@ class ScanFragment : Fragment() {
         rvBtDevicesAdapter = RvBtDevicesAdapter()
         rvBtDevicesAdapter.setOnItemClickListener(object : RvBtDevicesCallback<BtLeDevice> {
             override fun onDeviceClick(model: BtLeDevice, view: View) {
-
+                Toast.makeText(
+                    requireContext(),
+                    "Для подключения к устройству используйте долгое нажатие",
+                    Toast.LENGTH_LONG).show()
             }
 
             override fun onDeviceLongClick(model: BtLeDevice, view: View) {
@@ -78,8 +83,11 @@ class ScanFragment : Fragment() {
             })
             scanViewModel.service.observe(viewLifecycleOwner, { service ->
                 btLeScanService = service
+                btLeScanService?.scanLeDevices()
             })
         }
+
+
         return binding.root
 
     }
@@ -94,6 +102,7 @@ class ScanFragment : Fragment() {
         menuItemScanStart = menu.findItem(R.id.itemStartScan)
     }
 
+    @DelicateCoroutinesApi
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when(item.itemId) {
             R.id.itemStartScan -> {
@@ -111,9 +120,10 @@ class ScanFragment : Fragment() {
         }
     }
 
+    @DelicateCoroutinesApi
     override fun onDestroyView() {
+        BtLeScanServiceConnector.service.value?.stopScan()
         super.onDestroyView()
-        BtLeScanServiceConnector.stop()
         _binding = null
     }
 

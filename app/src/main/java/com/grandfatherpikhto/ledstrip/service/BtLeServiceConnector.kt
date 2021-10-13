@@ -37,8 +37,8 @@ object BtLeServiceConnector:ServiceConnection {
         GlobalScope.launch {
             btLeService.tryEmit(bindedService)
             bindedService.state.collect { state ->
-                Log.d(TAG, "Статус: $state")
                 sharedState.tryEmit(state)
+                Log.d(TAG, "Статус: $state")
             }
         }
     }

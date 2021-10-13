@@ -19,10 +19,12 @@ import com.grandfatherpikhto.ledstrip.service.BtLeScanService
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.service.BtLeServiceConnector
 import com.grandfatherpikhto.ledstrip.ui.model.SplashViewModel
+import kotlinx.coroutines.DelicateCoroutinesApi
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
  */
+@DelicateCoroutinesApi
 class SplashFragment : Fragment() {
     companion object {
         const val TAG = "SplashFragment"
