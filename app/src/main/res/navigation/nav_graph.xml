@@ -3,48 +3,67 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/ScanFragment">
+    app:startDestination="@id/SplashFragment">
 
     <fragment
+        android:id="@+id/SplashFragment"
+        android:name="com.grandfatherpikhto.ledstrip.ui.SplashFragment"
+        android:label="@string/splash_fragment_label"
+        tools:layout="@layout/fragment_splash">
+
+        <action
+            android:id="@+id/action_SplashFragment_to_ScanFragment"
+            app:destination="@id/ScanFragment" />
+        <action
+            android:id="@+id/action_SplashFragment_to_ContainerFragment"
+            app:destination="@id/ContainerFragment" />
+        <action
+            android:id="@+id/action_SplashFragment_to_SettingsFragment"
+            app:destination="@id/SettingsFragment" />
+    </fragment>
+    <fragment
         android:id="@+id/ScanFragment"
-        android:name="com.grandfatherpikhto.ledstrip.ui.scan.ScanFragment"
+        android:name="com.grandfatherpikhto.ledstrip.ui.ScanFragment"
         android:label="@string/scan_fragment_label"
         tools:layout="@layout/fragment_scan">
 
         <action
-            android:id="@+id/action_ScanFragment_to_LedstripFragment"
-            app:destination="@id/LedstripFragment" />
+            android:id="@+id/action_ScanFragment_to_SplashFragment"
+            app:destination="@id/SplashFragment" />
+        <action
+            android:id="@+id/action_ScanFragment_to_ContainerFragment"
+            app:destination="@id/ContainerFragment" />
         <action
             android:id="@+id/action_ScanFragment_to_SettingsFragment"
             app:destination="@id/SettingsFragment" />
     </fragment>
     <fragment
-        android:id="@+id/LedstripFragment"
-        android:name="com.grandfatherpikhto.ledstrip.ui.ledstrip.LedstripFragment"
-        android:label="@string/ledstrip_fragment_label"
-        tools:layout="@layout/fragment_ledstrip">
-
+        android:id="@+id/ContainerFragment"
+        android:name="com.grandfatherpikhto.ledstrip.ui.ContainerFragment"
+        android:label="@string/container_fragment_label"
+        tools:layout="@layout/fragment_container" >
         <action
-            android:id="@+id/action_LedstripFragment_to_ScanFragment"
+            android:id="@+id/action_ContainerFragment_to_ScanFragment"
             app:destination="@id/ScanFragment" />
         <action
-            android:id="@+id/action_LedstripFragment_to_SettingsFragment"
+            android:id="@+id/action_ContainerFragment_to_SplashFragment"
+            app:destination="@id/SplashFragment" />
+        <action
+            android:id="@+id/action_ContainerFragment_to_SettingsFragment"
             app:destination="@id/SettingsFragment" />
     </fragment>
     <fragment
         android:id="@+id/SettingsFragment"
-        android:name="com.grandfatherpikhto.ledstrip.ui.preference.SettingsFragment"
-        android:label="SettingsFragment">
+        android:name="com.grandfatherpikhto.ledstrip.ui.SettingsFragment"
+        android:label="@string/settings_fragment_label" >
+        <action
+            android:id="@+id/action_SettingsFragment_to_ContainerFragment"
+            app:destination="@id/ContainerFragment" />
         <action
             android:id="@+id/action_SettingsFragment_to_ScanFragment"
             app:destination="@id/ScanFragment" />
         <action
-            android:id="@+id/action_SettingsFragment_to_LedstripFragment"
-            app:destination="@id/LedstripFragment" />
+            android:id="@+id/action_SettingsFragment_to_SplashFragment"
+            app:destination="@id/SplashFragment" />
     </fragment>
-    <fragment
-        android:id="@+id/BlinkFragment"
-        android:name="com.grandfatherpikhto.ledstrip.ui.blink.BlinkFragment"
-        android:label="fragment_blink"
-        tools:layout="@layout/fragment_blink" />
 </navigation>

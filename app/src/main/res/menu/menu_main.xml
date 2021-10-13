@@ -3,16 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.grandfatherpikhto.ledstrip.ui.MainActivity">
     <item
-        android:id="@+id/itemOptions"
+        android:id="@+id/itemDevicesList"
+        android:title="@string/itemDevicesList" />
+    <item
+        android:id="@+id/action_settings"
         android:orderInCategory="100"
         android:title="@string/action_settings"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/itemScanBtDevices"
-        android:icon="@drawable/ic_baseline_search_24"
-        android:title="@string/itemScanBtDevices"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/itemBlinker"
-        android:title="@string/itemBlinker" />
 </menu>

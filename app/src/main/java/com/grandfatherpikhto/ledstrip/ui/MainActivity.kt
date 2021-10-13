@@ -1,12 +1,12 @@
 package com.grandfatherpikhto.ledstrip.ui
 
 import android.Manifest
-import android.content.*
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.IBinder
 import android.util.Log
-import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -17,48 +17,49 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
+import com.grandfatherpikhto.ledstrip.LedstripApplication
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.ActivityMainBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
-import com.grandfatherpikhto.ledstrip.service.BluetoothLeScanService
-import com.grandfatherpikhto.ledstrip.service.BluetoothLeService
+import com.grandfatherpikhto.ledstrip.service.BtLeScanService
+import com.grandfatherpikhto.ledstrip.service.BtLeScanServiceConnector
+import com.grandfatherpikhto.ledstrip.service.BtLeService
+import com.grandfatherpikhto.ledstrip.service.BtLeServiceConnector
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 
 class MainActivity : AppCompatActivity() {
     companion object {
-        const val TAG:String = "MainActivity"
+        const val TAG = "MainActivity"
+        const val ADDRESS = "52:D6:00:67:CC:0E"
     }
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-
-    /** Сюда запишется адрес выбранного устройства для того, чтобы потом к нему можно было подключиться */
-    private lateinit var preferences: SharedPreferences
-    /** Адрес уже выбранного устройства */
-    private lateinit var btDeviceName:String
-    /** Адрес уже выбранного устройства */
-    private lateinit var btDeviceAddress:String
-    /** */
-    private lateinit var navHost:NavHostFragment
     private lateinit var navController:NavController
+    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var deviceAddress:String
+    private lateinit var deviceName:String
 
-    /**
-     *
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        sharedPreferences = getSharedPreferences(AppConst.PREFERENCES, Context.MODE_PRIVATE).apply {
+            deviceAddress = getString(AppConst.DEVICE_ADDRESS, getString(R.string.default_device_address)).toString()
+            deviceAddress = ADDRESS
+            deviceName    = getString(AppConst.DEVICE_NAME, getString(R.string.default_device_name)).toString()
+        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
 
-        loadPreferences()
-        setStartNavigate()
+        navController = findNavController(R.id.nav_host_fragment_content_main)
+        appBarConfiguration = AppBarConfiguration(navController.graph)
+        setupActionBarWithNavController(navController, appBarConfiguration)
 
         requestPermissions(
             arrayListOf(
@@ -66,51 +67,59 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
             )
         )
+
+        navigateStart()
     }
 
-    /**
-     *
-     */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
 
-    /**
-     * Обработка событий меню. Если вернуть false, обработка будет передана дальше.  Например,
-     * если выберем отображение списка  устройств,во фрагменте ScanFragment клик по этому меню
-     * будет тоже обработан.
-     * Здесь обрабатываются щелчки по элементам панели действий. Панель действий будет
-     * автоматически обрабатывать нажатия кнопки «Домой/Вверх», если вы укажете родительское
-     * действие в AndroidManifest.xml.
-     */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.itemOptions -> {
-                navController.navigate(R.id.SettingsFragment)
-                return true
+            R.id.itemDevicesList -> {
+                if(navController.currentDestination?.id != R.id.ScanFragment) {
+                    navController.navigate(R.id.ScanFragment)
+                }
+                true
             }
-            R.id.itemScanBtDevices -> {
-                navController.navigate(R.id.ScanFragment)
-                return false
-            }
-            R.id.itemBlinker -> {
-                Log.d(TAG, "Открыть панель мерцания")
-                navController.navigate(R.id.BlinkFragment)
-                return true
+            R.id.action_settings -> {
+                if(navController.currentDestination?.id != R.id.SettingsFragment) {
+                    navController.navigate(R.id.SettingsFragment)
+                }
+                true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-    /**
-     *
-     */
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration)
                 || super.onSupportNavigateUp()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Intent(this, BtLeService::class.java).also { intent ->
+            Log.d(LedstripApplication.TAG, "Привязываем сервис")
+            bindService(intent, BtLeServiceConnector, Context.BIND_AUTO_CREATE)
+        }
+        Intent(this, BtLeScanService::class.java).also { intent ->
+            Log.d(LedstripApplication.TAG, "Привязываем сервис")
+            bindService(intent, BtLeScanServiceConnector, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unbindService(BtLeServiceConnector)
+        unbindService(BtLeScanServiceConnector)
     }
 
     /**
@@ -155,46 +164,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Загрузить сохранённые данные
-     */
-    private fun loadPreferences() {
-        preferences     = getSharedPreferences(AppConst.btPrefs, Context.MODE_PRIVATE)!!
-        btDeviceAddress = preferences.getString(AppConst.btAddress, getString(R.string.default_bt_device_address))!!
-        btDeviceName    = preferences.getString(AppConst.btName, getString(R.string.default_bt_device_name))!!
-    }
-
-    /**
-     * Если MAC-адрес установлен, переходим к фрагменту управления устройством,
-     * если нет, сканируем устройства
-     */
-    private fun setStartNavigate() {
-        navHost         = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
-        navController   = navHost.findNavController()
-        val graph = navController.navInflater.inflate(R.navigation.nav_graph)
-        if(btDeviceAddress.isEmpty() || btDeviceAddress == getString(R.string.default_bt_device_address)) {
-//            graph.startDestination = R.id.ScanFragment
-//            navController.graph = graph
-//            Log.d(TAG, "DeviceAddress: $btDeviceAddress")
-        }
-        appBarConfiguration = AppBarConfiguration(graph)
-        setupActionBarWithNavController(navController, appBarConfiguration)
-    }
-
-    /**
-     * Find fragment by class
-     *
-     * @param T
-     * @return
-     */
-    private inline fun <reified T: Fragment> FragmentManager.findFragmentByClass(): T? {
-        (fragments.firstOrNull { navHostFragment ->
-            navHostFragment is NavHostFragment
-        } as NavHostFragment)
-            .childFragmentManager.fragments.firstNotNullOf { fragment ->
-                if ( fragment is T )  return fragment
+    private fun navigateStart() {
+        lifecycleScope.launch {
+            BtLeServiceConnector.state.collect { state ->
+                if (navController.currentDestination?.id != R.id.ScanFragment) {
+                    if (state == BtLeService.State.Discovered) {
+//                        if (navController.currentDestination?.id != R.id.ContainerFragment) {
+//                            navController.popBackStack()
+//                            navController.navigate(R.id.ContainerFragment)
+//                        }
+                    } else {
+                        if (navController.currentDestination?.id != R.id.SplashFragment) {
+                            navController.navigate(R.id.SplashFragment)
+                        }
+                    }
+                }
             }
-
-        return  null
-    }
+        }
+        if(deviceAddress != getString(R.string.default_device_address)) {
+            if ( navController.currentDestination?.id != R.id.ScanFragment
+                && BtLeServiceConnector.state.value != BtLeService.State.Discovered
+                && navController.currentDestination?.id != R.id.SplashFragment
+            ) {
+                navController.navigate(R.id.SplashFragment)
+            }
+        }
+   }
 }
