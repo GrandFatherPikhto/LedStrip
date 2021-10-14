@@ -10,8 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.edit
 import androidx.fragment.app.viewModels
-import com.grandfatherpikhto.ledstrip.LedstripApplication
-import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.FragmentTagBinding
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.ui.model.LedstripViewModel
@@ -58,20 +56,20 @@ class TagFragment : Fragment() {
             })
             slSpeedTag.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {
-                    ledstripViewModel.changeTagSpeed(value)
+                    ledstripViewModel.changeSpeed(value)
                 }
             }
-            ledstripViewModel.tagSpeed.observe(viewLifecycleOwner, { value ->
+            ledstripViewModel.speed.observe(viewLifecycleOwner, { value ->
                 if(slSpeedTag.value !== value) {
                     slSpeedTag.value = value
                 }
             })
             slTagBrightness.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {
-                    ledstripViewModel.changeTagBrightness(value)
+                    ledstripViewModel.changeBrightness(value)
                 }
             }
-            ledstripViewModel.tagBrightness.observe(viewLifecycleOwner, { value ->
+            ledstripViewModel.brightness.observe(viewLifecycleOwner, { value ->
                 if(slTagBrightness.value != value) {
                     slTagBrightness.value = value
                 }
@@ -84,8 +82,8 @@ class TagFragment : Fragment() {
         super.onPause()
         sharedPreferences.edit {
             ledstripViewModel.regime.value?.let { putInt(REGIME, ledstripViewModel.regime.value!!.value) }
-            ledstripViewModel.tagSpeed.value?.let { putFloat(SPEED, it) }
-            ledstripViewModel.tagBrightness.value?.let { putFloat(BRIGHTNESS, it) }
+            ledstripViewModel.speed.value?.let { putFloat(SPEED, it) }
+            ledstripViewModel.brightness.value?.let { putFloat(BRIGHTNESS, it) }
         }
     }
 
@@ -97,8 +95,8 @@ class TagFragment : Fragment() {
                 Log.d(TAG, "onResume() regime: $regime")
                 ledstripViewModel.changeRegime(regime)
             }
-            ledstripViewModel.changeTagSpeed(getFloat(SPEED, 50F))
-            ledstripViewModel.changeTagBrightness(getFloat(BRIGHTNESS, 100F))
+            ledstripViewModel.changeSpeed(getFloat(SPEED, 50F))
+            ledstripViewModel.changeBrightness(getFloat(BRIGHTNESS, 100F))
         }
     }
 }

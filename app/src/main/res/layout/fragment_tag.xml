@@ -64,10 +64,10 @@
         android:text="@string/tvSpeedTag"
         app:layout_constraintBottom_toTopOf="@+id/slSpeedTag"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.09"
+        app:layout_constraintHorizontal_bias="0.175"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.98" />
+        app:layout_constraintTop_toBottomOf="@+id/tvTitleTag"
+        app:layout_constraintVertical_bias="0.77" />
 
     <TextView
         android:id="@+id/tvBrightnessTag"
@@ -76,9 +76,9 @@
         android:text="@string/tvBrightnessTag"
         app:layout_constraintBottom_toTopOf="@+id/slTagBrightness"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.09"
+        app:layout_constraintHorizontal_bias="0.11"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.97" />
+        app:layout_constraintTop_toBottomOf="@+id/slSpeedTag"
+        app:layout_constraintVertical_bias="0.79" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -56,11 +56,17 @@ class ScanFragment : Fragment() {
             override fun onDeviceClick(model: BtLeDevice, view: View) {
                 Toast.makeText(
                     requireContext(),
-                    "Для подключения к устройству используйте долгое нажатие",
+                    "Подключаемся к ${model.address}",
                     Toast.LENGTH_LONG).show()
+                connectBTDevice(model)
+
             }
 
             override fun onDeviceLongClick(model: BtLeDevice, view: View) {
+                Toast.makeText(
+                    requireContext(),
+                    "Подключаемся к ${model.address}",
+                    Toast.LENGTH_LONG).show()
                 connectBTDevice(model)
             }
 

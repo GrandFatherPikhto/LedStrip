@@ -10,11 +10,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.edit
 import androidx.fragment.app.viewModels
-import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.FragmentTailBinding
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.ui.model.LedstripViewModel
-import com.larswerkman.holocolorpicker.ColorPicker
 
 class TailFragment : Fragment() {
     companion object {
@@ -57,25 +55,13 @@ class TailFragment : Fragment() {
                 }
             })
 
-            pickerTail.addSVBar(svbarTail)
-            pickerTail.onColorChangedListener = ColorPicker.OnColorChangedListener{ color ->
-                if(ledstripViewModel.color.value != color) {
-                    ledstripViewModel.changeColor(color)
-                }
-            }
-            ledstripViewModel.color.observe(viewLifecycleOwner, { color ->
-                if(pickerTail.color != color) {
-                    pickerTail.color = color
-                }
-            })
-
             slTailSpeed.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {
-                    ledstripViewModel.changeTailSpeed(value)
+                    ledstripViewModel.changeSpeed(value)
                 }
             }
 
-            ledstripViewModel.tailSpeed.observe(viewLifecycleOwner, { value ->
+            ledstripViewModel.speed.observe(viewLifecycleOwner, { value ->
                 if(slTailSpeed.value != value) {
                     slTailSpeed.value = value
                 }
@@ -83,11 +69,11 @@ class TailFragment : Fragment() {
 
             slTailWidth.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {
-                    ledstripViewModel.changeTailLength(value)
+                    ledstripViewModel.changeLength(value)
                 }
             }
 
-            ledstripViewModel.tailLength.observe(viewLifecycleOwner, { value ->
+            ledstripViewModel.length.observe(viewLifecycleOwner, { value ->
                 if(slTailWidth.value != value) {
                     slTailWidth.value = value
                 }
@@ -101,8 +87,8 @@ class TailFragment : Fragment() {
         sharedPreferences.edit {
             ledstripViewModel.regime.value?.let { putInt(REGIME, ledstripViewModel.regime.value!!.value) }
             ledstripViewModel.color.value?.let { putInt(COLOR, it) }
-            ledstripViewModel.tailSpeed.value?.let { putFloat(SPEED, ledstripViewModel.tailSpeed.value!!)}
-            ledstripViewModel.tailLength.value?.let { putFloat(LENGTH, ledstripViewModel.tailLength.value!!)}
+            ledstripViewModel.speed.value?.let { putFloat(SPEED, ledstripViewModel.speed.value!!)}
+            ledstripViewModel.length.value?.let { putFloat(LENGTH, ledstripViewModel.length.value!!)}
         }
     }
 
@@ -114,8 +100,8 @@ class TailFragment : Fragment() {
                 ledstripViewModel.changeRegime(regime)
             }
             ledstripViewModel.changeColor(getInt(COLOR, 0xff80ff))
-            ledstripViewModel.changeTailSpeed(getFloat(SPEED, 20F))
-            ledstripViewModel.changeTailLength(getFloat(LENGTH, 25F))
+            ledstripViewModel.changeSpeed(getFloat(SPEED, 20F))
+            ledstripViewModel.changeLength(getFloat(LENGTH, 25F))
         }
     }
 }

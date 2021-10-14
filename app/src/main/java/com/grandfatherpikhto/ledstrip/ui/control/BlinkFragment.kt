@@ -10,7 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.edit
 import androidx.fragment.app.viewModels
-import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.FragmentBlinkBinding
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.ui.model.LedstripViewModel
@@ -78,11 +77,11 @@ class BlinkFragment : Fragment() {
 
             slBlinkFrequency.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {
-                    ledstripViewModel.changeBlinkFrequency(value)
+                    ledstripViewModel.changeFrequency(value)
                 }
             }
 
-            ledstripViewModel.blinkFrequency.observe(viewLifecycleOwner, { frequency ->
+            ledstripViewModel.frequency.observe(viewLifecycleOwner, { frequency ->
                 if(slBlinkFrequency.value != frequency) {
                     slBlinkFrequency.value = frequency
                 }
@@ -99,7 +98,7 @@ class BlinkFragment : Fragment() {
                 Log.d(TAG, "onResume() regime: $regime")
                 ledstripViewModel.changeRegime(regime)
             }
-            ledstripViewModel.changeBlinkFrequency(getFloat(FREQUENCY, 20F))
+            ledstripViewModel.changeFrequency(getFloat(FREQUENCY, 20F))
         }
     }
 
@@ -108,7 +107,7 @@ class BlinkFragment : Fragment() {
         sharedPreferences.edit {
             ledstripViewModel.color.value?.let { putInt(COLOR, it) }
             ledstripViewModel.regime.value?.let { putInt(REGIME, ledstripViewModel.regime.value!!.value) }
-            ledstripViewModel.blinkFrequency.value?.let { putFloat(FREQUENCY, ledstripViewModel.blinkFrequency.value!!)}
+            ledstripViewModel.frequency.value?.let { putFloat(FREQUENCY, ledstripViewModel.frequency.value!!)}
         }
     }
 }

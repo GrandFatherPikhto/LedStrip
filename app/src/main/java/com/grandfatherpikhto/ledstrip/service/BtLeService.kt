@@ -18,6 +18,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
+import java.nio.ByteBuffer
 import java.util.*
 
 class BtLeService:Service() {
@@ -29,12 +30,20 @@ class BtLeService:Service() {
         const val SHARED_REGIME_BUFFER_SIZE = 0x10
         const val SHARED_COLOR_BUFFER_SIZE = 0x100
 
-        const val BUFFER_COLOR_CAPACITY  = 0x100
-        const val BUFFER_REGIME_CAPACITY = 0x02
+        const val BUFFER_COLOR_CAPACITY      = 0x100
+        const val BUFFER_REGIME_CAPACITY     = 0x02
+        const val BUFFER_LENGTH_CAPACITY     = 0x100
+        const val BUFFER_SPEED_CAPACITY      = 0x100
+        const val BUFFER_BRIGHTNESS_CAPACITY = 0x100
+        const val BUFFER_FREQUENCY_CAPACITY  = 0x100
 
-        val UUID_SERVICE_LEDSTRIP: UUID by lazy { UUID.fromString("000000ff-6418-5c4b-a046-0101910b5ad4") }
-        val UUID_SERVICE_CHAR_COLOR: UUID by lazy { UUID.fromString("0000ff01-6418-5c4b-a046-0101910b5ad4") }
-        val UUID_SERVICE_CHAR_REGIME: UUID by lazy { UUID.fromString("0000ff02-6418-5c4b-a046-0101910b5ad4") }
+        val UUID_SERVICE_LEDSTRIP:        UUID by lazy { UUID.fromString("000000ff-6418-5c4b-a046-0101910b5ad4") }
+        val UUID_SERVICE_CHAR_REGIME:     UUID by lazy { UUID.fromString("0000ff01-6418-5c4b-a046-0101910b5ad4") }
+        val UUID_SERVICE_CHAR_COLOR:      UUID by lazy { UUID.fromString("0000ff02-6418-5c4b-a046-0101910b5ad4") }
+        val UUID_SERVICE_CHAR_BRIGHTNESS: UUID by lazy { UUID.fromString("0000ff03-6418-5c4b-a046-0101910b5ad4") }
+        val UUID_SERVICE_CHAR_SPEED:      UUID by lazy { UUID.fromString("0000ff04-6418-5c4b-a046-0101910b5ad4") }
+        val UUID_SERVICE_CHAR_LENGTH:     UUID by lazy { UUID.fromString("0000ff05-6418-5c4b-a046-0101910b5ad4") }
+        val UUID_SERVICE_CHAR_FREQUENCY:  UUID by lazy { UUID.fromString("0000ff06-6418-5c4b-a046-0101910b5ad4") }
     }
 
     private val defaultAddress:String by lazy {
@@ -94,9 +103,54 @@ class BtLeService:Service() {
     /** */
     private var serviceLedstrip: BluetoothGattService? = null
     /** */
+    private var charRegime: BluetoothGattCharacteristic? = null
+    /** */
     private var charColor: BluetoothGattCharacteristic?  = null
     /** */
-    private var charRegime: BluetoothGattCharacteristic? = null
+    private var charBrightness: BluetoothGattCharacteristic? = null
+    /** */
+    private var charSpeed: BluetoothGattCharacteristic? = null
+    /** */
+    private var charLength: BluetoothGattCharacteristic? = null
+    /** */
+    private var charFrequency: BluetoothGattCharacteristic? = null
+
+
+    /** Адрес подключённого устройства */
+    private val _address = MutableStateFlow(DEFAULT_ADDRESS)
+    val address:StateFlow<String> = _address
+
+    private val sharedState = MutableStateFlow<State>(State.Disconnected)
+    val state:SharedFlow<State> = sharedState
+
+    private val sharedPairing = MutableStateFlow<Pairing>(Pairing.NotPaired)
+    val pairing:StateFlow<Pairing> = sharedPairing
+
+    private val sharedRegime = MutableSharedFlow<Regime>(replay = SHARED_REGIME_BUFFER_SIZE)
+    val regime:SharedFlow<Regime> = sharedRegime
+
+    private val sharedColor = MutableSharedFlow<Int>(replay = SHARED_REGIME_BUFFER_SIZE,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val color:SharedFlow<Int> = sharedColor
+
+    /** Binder given to clients */
+    private val binder = LocalBinder()
+
+    private val regimeChannel     = Channel<Regime> (capacity = BUFFER_REGIME_CAPACITY,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val colorChannel      = Channel<Int>    (capacity = BUFFER_COLOR_CAPACITY,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val brightnessChannel = Channel<Float>  (capacity = BUFFER_BRIGHTNESS_CAPACITY,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val speedChannel      = Channel<Float>  (capacity = BUFFER_SPEED_CAPACITY,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val lengthChannel     = Channel<Float>  (capacity = BUFFER_LENGTH_CAPACITY,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val frequencyChannel  = Channel<Float>  (capacity = BUFFER_FREQUENCY_CAPACITY,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    private val charWriteMutex = Mutex()
+
     /**
      *
      */
@@ -189,10 +243,20 @@ class BtLeService:Service() {
                                 serviceLedstrip!!.characteristics.forEach { char ->
                                     Log.d(TAG, "${char.uuid}")
                                 }
-                                charColor   = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_COLOR)
-                                charRegime  = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_REGIME)
-                                Log.d(TAG, "Сервис: ${serviceLedstrip!!.uuid}, Цвет: ${charColor!!.uuid}, свойства ${charColor?.properties.toString()}")
-                                Log.d(TAG, "Сервис: ${serviceLedstrip!!.uuid}, Режим: ${charRegime!!.uuid}")
+                                charRegime     = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_REGIME)
+                                charColor      = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_COLOR)
+                                charBrightness = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_BRIGHTNESS)
+                                charSpeed      = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_SPEED)
+                                charLength     = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_LENGTH)
+                                charFrequency  = serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_FREQUENCY)
+
+                                Log.d(TAG, "Сервис: ${serviceLedstrip!!.uuid}")
+                                Log.d(TAG, "1. Режим: ${charRegime!!.uuid}")
+                                Log.d(TAG, "2. Цвет: ${charColor!!.uuid}, свойства ${charColor?.properties.toString()}")
+                                Log.d(TAG, "3. Яркость: ${charBrightness?.uuid}")
+                                Log.d(TAG, "4. Скорость: ${charSpeed?.uuid}")
+                                Log.d(TAG, "5. Длина: ${charLength?.uuid}")
+                                Log.d(TAG, "6. Частота: ${charFrequency?.uuid}")
 
                                 if((charColor?.properties?.and(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT))
                                     == BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT ) {
@@ -223,29 +287,6 @@ class BtLeService:Service() {
         }
     }
 
-    /** Адрес подключённого устройства */
-    private val _address = MutableStateFlow(DEFAULT_ADDRESS)
-    val address:StateFlow<String> = _address
-
-    private val sharedState = MutableStateFlow<State>(State.Disconnected)
-    val state:SharedFlow<State> = sharedState
-
-    private val sharedPairing = MutableStateFlow<Pairing>(Pairing.NotPaired)
-    val pairing:StateFlow<Pairing> = sharedPairing
-
-    private val sharedRegime = MutableSharedFlow<Regime>(replay = SHARED_REGIME_BUFFER_SIZE)
-    val regime:SharedFlow<Regime> = sharedRegime
-
-    private val sharedColor = MutableSharedFlow<Int>(replay = SHARED_REGIME_BUFFER_SIZE, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val color:SharedFlow<Int> = sharedColor
-
-    /** Binder given to clients */
-    private val binder = LocalBinder()
-
-    private val regimeChannel = Channel<Regime> (capacity = BUFFER_REGIME_CAPACITY,  onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val colorChannel  = Channel<Int>    (capacity = BUFFER_COLOR_CAPACITY,   onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val charWriteMutex = Mutex()
-
     /**
      * Создание сервиса. Первичная инициализация
      */
@@ -261,6 +302,14 @@ class BtLeService:Service() {
 
         GlobalScope.launch {
             while(true) {
+                regimeChannel.consumeEach { value ->
+                    writeCharacteristic(charRegime, byteArrayOf(value.value.toByte()))
+                }
+            }
+        }
+
+        GlobalScope.launch {
+            while(true) {
                 colorChannel.consumeEach { value ->
                     writeCharacteristic(charColor, value.toByteArray())
                 }
@@ -269,8 +318,33 @@ class BtLeService:Service() {
 
         GlobalScope.launch {
             while(true) {
-                regimeChannel.consumeEach { value ->
-                    writeCharacteristic(charRegime, byteArrayOf(value.value.toByte()))
+                brightnessChannel.consumeEach { value ->
+                    writeCharacteristic(charBrightness, value.toByteArray())
+                }
+            }
+        }
+
+        GlobalScope.launch {
+            while(true) {
+                speedChannel.consumeEach { value ->
+                    writeCharacteristic(charSpeed, value.toByteArray())
+                }
+            }
+        }
+
+        GlobalScope.launch {
+            while(true) {
+                lengthChannel.consumeEach { value ->
+                    writeCharacteristic(charLength, value.toByteArray())
+                }
+            }
+        }
+
+        GlobalScope.launch {
+            while(true) {
+                frequencyChannel.consumeEach { value ->
+                    Log.d(TAG, "Frequency: $value")
+                    writeCharacteristic(charFrequency, value.toByteArray())
                 }
             }
         }
@@ -302,6 +376,7 @@ class BtLeService:Service() {
         fun getService(): BtLeService = this@BtLeService
     }
 
+    @DelicateCoroutinesApi
     override fun onBind(p0: Intent?): IBinder? {
         Log.d(TAG, "Сервис связан")
         GlobalScope.launch {
@@ -362,8 +437,14 @@ class BtLeService:Service() {
         bluetoothGatt?.close()
         sharedState.tryEmit(State.Disconnected)
         bluetoothGatt = null
+        serviceLedstrip = null
+
         charRegime = null
         charColor  = null
+        charBrightness = null
+        charLength = null
+        charSpeed = null
+        charFrequency = null
     }
 
     /**
@@ -384,9 +465,14 @@ class BtLeService:Service() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     @DelicateCoroutinesApi
     fun rescanDevicesByAddress() {
         BtLeScanServiceConnector.service.value?.scanLeDevices(address.value)
+        GlobalScope.launch {
+            delay(100)
+            doConnect()
+        }
     }
 
     /**
@@ -415,8 +501,36 @@ class BtLeService:Service() {
 
     @DelicateCoroutinesApi
     fun writeColor(color:Int) {
-        GlobalScope.launch {
+        val launch = GlobalScope.launch {
             colorChannel.send(color)
+        }
+    }
+
+    @DelicateCoroutinesApi
+    fun writeBrightness(brightness: Float) {
+        GlobalScope.launch {
+            brightnessChannel.send(brightness)
+        }
+    }
+
+    @DelicateCoroutinesApi
+    fun writeSpeed(speed: Float) {
+        GlobalScope.launch {
+            speedChannel.send(speed)
+        }
+    }
+
+    @DelicateCoroutinesApi
+    fun writeLength(length: Float) {
+        GlobalScope.launch {
+            lengthChannel.send(length)
+        }
+    }
+
+    @DelicateCoroutinesApi
+    fun writeFrequency(frequency: Float) {
+        GlobalScope.launch {
+            frequencyChannel.send(frequency)
         }
     }
 
@@ -429,4 +543,9 @@ class BtLeService:Service() {
         return byteArray
     }
 
+    private fun Float.toByteArray():ByteArray {
+        val ar = ByteBuffer.allocate(Float.SIZE_BYTES).putFloat(this).array()
+        ar.reverse()
+        return ar
+    }
 }

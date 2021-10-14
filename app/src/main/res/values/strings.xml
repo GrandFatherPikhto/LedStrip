@@ -44,6 +44,6 @@
     <string name="tvBrightnessTag">Brightness</string>
     <string name="tvSpeedTag">Speed</string>
     <string name="tvWaterBrightness">Brightness</string>
-    <string name="tvTailWidth">Width</string>
+    <string name="tvTailLen">Length</string>
     <!-- TODO: Remove or change this placeholder text -->
 </resources>

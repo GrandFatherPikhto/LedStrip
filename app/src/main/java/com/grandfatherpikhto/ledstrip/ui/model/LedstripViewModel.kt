@@ -1,6 +1,5 @@
 package com.grandfatherpikhto.ledstrip.ui.model
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -27,28 +26,18 @@ class LedstripViewModel:ViewModel() {
     private val _color = MutableLiveData<Int> ()
     val color
         get() = _color
-    private val _blinkFrequency = MutableLiveData<Float>(20F)
-    val blinkFrequency: LiveData<Float>
-        get() = _blinkFrequency
-    private val _tailSpeed = MutableLiveData<Float>(50F)
-    val tailSpeed: LiveData<Float>
-        get() = _tailSpeed
-    private val _tailLength = MutableLiveData<Float>(25F)
-    val tailLength: LiveData<Float>
-        get() = _tailLength
-    private val _tagSpeed = MutableLiveData<Float>(50F)
-    val tagSpeed: LiveData<Float>
-        get() = _tagSpeed
-    private val _tagBrightness = MutableLiveData<Float>(100F)
-    val tagBrightness: LiveData<Float>
-        get() = _tagBrightness
-    private val _waterSpeed = MutableLiveData<Float>(50F)
-    val waterSpeed: LiveData<Float>
-        get() = _waterSpeed
-    private val _waterBrightness = MutableLiveData<Float>(100F)
-    val waterBrightness: LiveData<Float>
-        get() = _waterBrightness
-
+    private val _frequency = MutableLiveData<Float>(20F)
+    val frequency: LiveData<Float>
+        get() = _frequency
+    private val _speed = MutableLiveData<Float>(50F)
+    val speed: LiveData<Float>
+        get() = _speed
+    private val _length = MutableLiveData<Float>(25F)
+    val length: LiveData<Float>
+        get() = _length
+    private val _brightness = MutableLiveData<Float>(100F)
+    val brightness: LiveData<Float>
+        get() = _brightness
 
     init {
         viewModelScope.launch {
@@ -86,31 +75,23 @@ class LedstripViewModel:ViewModel() {
         service?.writeColor(value)
     }
 
-    fun changeBlinkFrequency(value:Float) {
-        _blinkFrequency.value = value
+    fun changeFrequency(value:Float) {
+        _frequency.value = value
+        service?.writeFrequency(value)
     }
 
-    fun changeTailSpeed(value:Float) {
-        _tailSpeed.value = value
+    fun changeSpeed(value:Float) {
+        _speed.value = value
+        service?.writeSpeed(value)
     }
 
-    fun changeTailLength(value:Float) {
-        _tailLength.value = value
+    fun changeLength(value:Float) {
+        _length.value = value
+        service?.writeLength(value)
     }
 
-    fun changeTagSpeed(value:Float) {
-        _tagSpeed.value = value
-    }
-
-    fun changeTagBrightness(value:Float) {
-        _tagBrightness.value = value
-    }
-
-    fun changeWaterSpeed(value:Float) {
-        _waterSpeed.value = value
-    }
-
-    fun changeWaterBrightness(value:Float) {
-        _waterBrightness.value = value
+    fun changeBrightness(value:Float) {
+        _brightness.value = value
+        service?.writeBrightness(value)
     }
 }

@@ -54,20 +54,20 @@ class WaterFragment : Fragment() {
             })
             slWaterSpeed.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {
-                    ledstripViewModel.changeWaterSpeed(value)
+                    ledstripViewModel.changeSpeed(value)
                 }
             }
-            ledstripViewModel.waterSpeed.observe(viewLifecycleOwner, { value ->
+            ledstripViewModel.speed.observe(viewLifecycleOwner, { value ->
                 if(slWaterSpeed.value !== value) {
                     slWaterSpeed.value = value
                 }
             })
             slWaterBrightness.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {
-                    ledstripViewModel.changeWaterBrightness(value)
+                    ledstripViewModel.changeBrightness(value)
                 }
             }
-            ledstripViewModel.waterBrightness.observe(viewLifecycleOwner, { value ->
+            ledstripViewModel.brightness.observe(viewLifecycleOwner, { value ->
                 if(slWaterBrightness.value != value) {
                     slWaterBrightness.value = value
                 }
@@ -80,8 +80,8 @@ class WaterFragment : Fragment() {
         super.onPause()
         sharedPreferences.edit {
             ledstripViewModel.regime.value?.let { putInt(REGIME, ledstripViewModel.regime.value!!.value) }
-            ledstripViewModel.waterSpeed.value?.let { putFloat(SPEED, it) }
-            ledstripViewModel.waterBrightness.value?.let { putFloat(BRIGHTNESS, it) }
+            ledstripViewModel.speed.value?.let { putFloat(SPEED, it) }
+            ledstripViewModel.brightness.value?.let { putFloat(BRIGHTNESS, it) }
         }
     }
 
@@ -92,8 +92,8 @@ class WaterFragment : Fragment() {
                 Log.d(TAG, "onResume() regime: $regime")
                 ledstripViewModel.changeRegime(regime)
             }
-            ledstripViewModel.changeWaterSpeed(getFloat(SPEED, 50F))
-            ledstripViewModel.changeWaterBrightness(getFloat(BRIGHTNESS, 100F))
+            ledstripViewModel.changeSpeed(getFloat(SPEED, 50F))
+            ledstripViewModel.changeBrightness(getFloat(BRIGHTNESS, 100F))
         }
     }
 }

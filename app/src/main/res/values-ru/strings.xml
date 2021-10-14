@@ -35,5 +35,5 @@
     <string name="tvBrightnessTag">Яркость</string>
     <string name="tvSpeedTag">Скорость</string>
     <string name="tvWaterBrightness">Яркость</string>
-    <string name="tvTailWidth">Длина</string>
+    <string name="tvTailLen">Длина</string>
 </resources>
