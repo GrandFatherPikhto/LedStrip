@@ -4,20 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingLeft="10pt"
+    android:paddingRight="20pt"
     tools:context=".ui.control.TailFragment">
-
-    <com.google.android.material.slider.Slider
-        android:id="@+id/slTailSpeed"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/tvTailLen"
-        android:value="50"
-        android:valueFrom="10"
-        android:valueTo="100"
-        app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitleTail" />
 
     <com.google.android.material.slider.Slider
         android:id="@+id/slTailWidth"
@@ -32,15 +21,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/slTailSpeed" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/swEnableTail"
+    <com.larswerkman.holocolorpicker.ColorPicker
+        android:id="@+id/pickerTail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/switchEnable"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/svbarTail"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/slTailWidth" />
+        app:layout_constraintTop_toBottomOf="@+id/tvTitleTail" />
+
+    <com.larswerkman.holocolorpicker.SVBar
+        android:id="@+id/svbarTail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pickerTail" />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/slTailSpeed"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/tvTailLen"
+        android:value="50"
+        android:valueFrom="10"
+        android:valueTo="100"
+        app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/svbarTail" />
 
     <TextView
         android:id="@+id/tvTitleTail"
@@ -48,7 +58,7 @@
         android:layout_height="wrap_content"
         android:text="@string/tvTitleTail"
         android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
+        app:layout_constraintBottom_toTopOf="@+id/pickerTail"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -61,7 +71,7 @@
         app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitleTail" />
+        app:layout_constraintTop_toBottomOf="@+id/svbarTail" />
 
     <TextView
         android:id="@+id/tvTailLen"
@@ -72,4 +82,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/slTailSpeed" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/swEnableTail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/switchEnable"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/slTailWidth" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -40,6 +40,30 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var deviceAddress: String
     private lateinit var deviceName: String
+    private var state:State = State.Splash
+
+    enum class State(val value: Int) {
+        Scan(R.id.ScanFragment),
+        Splash(R.id.SplashFragment),
+        Container(R.id.ContainerFragment),
+        Settings(R.id.SettingsFragment);
+
+        fun isScan():Boolean {
+            return this.value == R.id.ScanFragment
+        }
+
+        fun isSplah():Boolean {
+            return this.value == R.id.SplashFragment
+        }
+
+        fun isContainer():Boolean {
+            return this.value == R.id.ContainerFragment
+        }
+
+        fun isSettings():Boolean {
+            return this.value == R.id.SettingsFragment
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,15 +109,13 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.itemDevicesList -> {
-                if (navController.currentDestination?.id != R.id.ScanFragment) {
-                    navController.navigate(R.id.ScanFragment)
-                }
+                BtLeServiceConnector.close()
+                deviceAddress = getString(R.string.default_device_address)
+                setState(State.Scan)
                 true
             }
             R.id.action_settings -> {
-                if (navController.currentDestination?.id != R.id.SettingsFragment) {
-                    navController.navigate(R.id.SettingsFragment)
-                }
+                setState(State.Settings)
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -200,20 +222,20 @@ class MainActivity : AppCompatActivity() {
                                 if (navController.currentDestination?.id != R.id.SplashFragment
                                     && deviceAddress != getString(R.string.default_device_address)
                                 ) {
-                                    navController.navigate(R.id.SplashFragment)
+                                    setState(State.Splash)
                                 }
                             }
                             BtLeService.State.Discovered -> {
                                 if (navController.currentDestination?.id != R.id.ContainerFragment
                                     && deviceAddress != getString(R.string.default_device_address)
                                 ) {
-                                    navController.navigate(R.id.ContainerFragment)
+                                    setState(State.Container)
                                 }
                             }
                             else -> {
                                 if(navController.currentDestination?.id != R.id.ScanFragment
                                     && deviceAddress == getString(R.string.default_device_address)) {
-                                    navController.navigate(R.id.ScanFragment)
+                                    setState(State.Splash)
                                 }
                             }
                         }
@@ -221,6 +243,32 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun setState(value: State) {
+        when (value) {
+            State.Scan -> {
+                if(!state.isScan()) {
+                    navController.navigate(State.Scan.value)
+                }
+            }
+            State.Splash -> {
+                if(!state.isSplah()) {
+                    navController.navigate(State.Splash.value)
+                }
+            }
+            State.Container -> {
+                if(!state.isContainer()) {
+                    navController.navigate(State.Container.value)
+                }
+            }
+            State.Settings -> {
+                if(!state.isSettings()) {
+                    navController.navigate(State.Settings.value)
+                }
+            }
+        }
+        state = value
     }
 
     private fun navigateStart() {

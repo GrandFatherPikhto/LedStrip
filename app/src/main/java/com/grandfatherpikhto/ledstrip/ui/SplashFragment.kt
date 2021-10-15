@@ -58,6 +58,7 @@ class SplashFragment : Fragment() {
         splashViewModel.service.observe(viewLifecycleOwner, { service ->
             if(service != null) {
                 Log.d(TAG, "Пытаемся подключиться: $deviceAddress, ${BtLeServiceConnector.service.value}")
+                BtLeServiceConnector.service.value?.close()
                 BtLeServiceConnector.service.value?.connect(deviceAddress)
             }
         })

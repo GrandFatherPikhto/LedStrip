@@ -13,6 +13,7 @@ import androidx.fragment.app.viewModels
 import com.grandfatherpikhto.ledstrip.databinding.FragmentTailBinding
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.ui.model.LedstripViewModel
+import com.larswerkman.holocolorpicker.ColorPicker
 
 class TailFragment : Fragment() {
     companion object {
@@ -54,6 +55,20 @@ class TailFragment : Fragment() {
                     }
                 }
             })
+
+            pickerTail.addSVBar(svbarTail)
+            pickerTail.onColorChangedListener = ColorPicker.OnColorChangedListener { value ->
+                if( ledstripViewModel.color.value != value ) {
+                    ledstripViewModel.changeColor(value)
+                }
+            }
+
+            ledstripViewModel.color.observe(viewLifecycleOwner, { value ->
+                if(pickerTail.color != value) {
+                    pickerTail.color = value
+                }
+            })
+
 
             slTailSpeed.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {

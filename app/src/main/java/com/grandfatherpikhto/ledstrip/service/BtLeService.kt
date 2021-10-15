@@ -12,6 +12,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.grandfatherpikhto.ledstrip.R
+import com.grandfatherpikhto.ledstrip.helper.toByteArray
+import com.grandfatherpikhto.ledstrip.helper.toHex
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -25,7 +27,7 @@ class BtLeService:Service() {
     companion object {
         const val TAG = "BtLeService"
         const val DEFAULT_ADDRESS = "00:00:00:00:00:00"
-        const val WAIT_BEFORE_CONNECT   = 50L
+        const val WAIT_BEFORE_CONNECT   = 1000L
         const val WAIT_BEFORE_DISCOVERY = 500L
         const val SHARED_REGIME_BUFFER_SIZE = 0x10
         const val SHARED_COLOR_BUFFER_SIZE = 0x100
@@ -189,6 +191,7 @@ class BtLeService:Service() {
      */
     @DelicateCoroutinesApi
     private val bluetoothGattCallback = object : BluetoothGattCallback() {
+        @RequiresApi(Build.VERSION_CODES.M)
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
             when (newState) {
@@ -311,6 +314,7 @@ class BtLeService:Service() {
         GlobalScope.launch {
             while(true) {
                 colorChannel.consumeEach { value ->
+                    Log.d(TAG, "write color: ${value.toByteArray()} ${value.toHex()}")
                     writeCharacteristic(charColor, value.toByteArray())
                 }
             }
@@ -494,7 +498,6 @@ class BtLeService:Service() {
     @DelicateCoroutinesApi
     fun writeRegime(regime:Regime) {
         GlobalScope.launch {
-            if(charWriteMutex.isLocked) charWriteMutex.unlock()
             regimeChannel.send(regime)
         }
     }
@@ -532,20 +535,5 @@ class BtLeService:Service() {
         GlobalScope.launch {
             frequencyChannel.send(frequency)
         }
-    }
-
-    private fun Int.toByteArray():ByteArray {
-        val byteArray = ByteArray(Int.SIZE_BYTES)
-        for(i in 0 until Int.SIZE_BYTES) {
-            val num = Int.SIZE_BYTES - i - 1
-            byteArray[num] = this.shr(num*8).and(0xFF).toByte()
-        }
-        return byteArray
-    }
-
-    private fun Float.toByteArray():ByteArray {
-        val ar = ByteBuffer.allocate(Float.SIZE_BYTES).putFloat(this).array()
-        ar.reverse()
-        return ar
     }
 }

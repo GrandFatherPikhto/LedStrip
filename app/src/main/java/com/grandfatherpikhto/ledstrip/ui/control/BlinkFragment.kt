@@ -61,7 +61,7 @@ class BlinkFragment : Fragment() {
                     }
                 }
             })
-            pickerBlink.addSVBar(svbarColor)
+            pickerBlink.addSVBar(svbarBlink)
 
             ledstripViewModel.color.observe(viewLifecycleOwner, { color ->
                 if(pickerBlink.color != color) {

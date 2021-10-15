@@ -8,6 +8,15 @@ import java.nio.ByteOrder
  * https://docs.microsoft.com/ru-ru/windows/win32/api/winsock/nf-winsock-htonl
  **/
 
+private fun ByteArray.toHex():String {
+    val out:StringBuilder = java.lang.StringBuilder()
+    this.forEach { bt ->
+        out.append(String.format("%02x", bt))
+    }
+
+    return out.toString()
+}
+
 private fun ByteArray.toInt(order: ByteOrder = ByteOrder.BIG_ENDIAN):Int {
     return ByteBuffer.wrap(this).order(order).getInt(0)
 }
