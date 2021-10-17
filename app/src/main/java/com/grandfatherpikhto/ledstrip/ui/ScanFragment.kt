@@ -2,10 +2,12 @@ package com.grandfatherpikhto.ledstrip.ui
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.core.content.edit
 import androidx.fragment.app.viewModels
@@ -49,10 +51,10 @@ class ScanFragment : Fragment() {
         setHasOptionsMenu(true)
 
         _binding = FragmentScanBinding.inflate(inflater, container, false)
-        BtLeServiceConnector.service.value?.close()
         sharedPreferences = requireActivity().getSharedPreferences(AppConst.PREFERENCES, Context.MODE_PRIVATE)
         rvBtDevicesAdapter = RvBtDevicesAdapter()
         rvBtDevicesAdapter.setOnItemClickListener(object : RvBtDevicesCallback<BtLeDevice> {
+            @RequiresApi(Build.VERSION_CODES.M)
             override fun onDeviceClick(model: BtLeDevice, view: View) {
                 Toast.makeText(
                     requireContext(),
@@ -62,6 +64,7 @@ class ScanFragment : Fragment() {
 
             }
 
+            @RequiresApi(Build.VERSION_CODES.M)
             override fun onDeviceLongClick(model: BtLeDevice, view: View) {
                 Toast.makeText(
                     requireContext(),
@@ -81,7 +84,6 @@ class ScanFragment : Fragment() {
                 if(state == BtLeScanService.State.Scan) {
                     menuItemScanStart?.setIcon(R.drawable.ic_baseline_search_off_24)
                     menuItemScanStart?.setTitle(R.string.stop_scan)
-                    BtLeServiceConnector.close()
                 } else {
                     menuItemScanStart?.setIcon(R.drawable.ic_baseline_search_24)
                     menuItemScanStart?.setTitle(R.string.start_scan)
@@ -113,7 +115,6 @@ class ScanFragment : Fragment() {
         return when(item.itemId) {
             R.id.itemStartScan -> {
                 scanViewModel.clean()
-                BtLeServiceConnector.service.value?.close()
                 btLeScanService?.scanLeDevices()
                 true
             }
@@ -126,6 +127,17 @@ class ScanFragment : Fragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume()")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        BtLeScanServiceConnector.service.value?.stopScan()
+        Log.d(TAG, "onPause()")
+    }
+
     @DelicateCoroutinesApi
     override fun onDestroyView() {
         BtLeScanServiceConnector.service.value?.stopScan()
@@ -134,12 +146,15 @@ class ScanFragment : Fragment() {
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun connectBTDevice(btLeDevice: BtLeDevice) {
         BtLeScanServiceConnector.stop()
         sharedPreferences.edit {
             putString(AppConst.DEVICE_ADDRESS, btLeDevice.address)
             putString(AppConst.DEVICE_NAME, btLeDevice.name)
+            commit()
         }
-        findNavController().navigate(R.id.action_ScanFragment_to_SplashFragment)
+        Log.d(TAG, "Подключаемся к устройству ${btLeDevice.address}")
+        BtLeServiceConnector.service?.connect(btLeDevice.address)
     }
 }

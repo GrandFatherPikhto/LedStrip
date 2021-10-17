@@ -198,7 +198,8 @@ class BtLeScanService: Service() {
      * Запуск сканирования
      */
     @DelicateCoroutinesApi
-    private fun startScan() {
+    private fun startScan(address:String = applicationContext.getString(R.string.default_device_address),
+                          name:String = applicationContext.getString(R.string.default_device_name)) {
         bluetoothLeDevices.clear()
 
         val scanSettings: ScanSettings = ScanSettings.Builder()
@@ -207,13 +208,14 @@ class BtLeScanService: Service() {
 
         val filters:MutableList<ScanFilter> = mutableListOf()
 
-        if(bluetoothAddress != applicationContext.getString(R.string.default_device_address)) {
-            Log.d(TAG, "bluetoothAddress: $bluetoothAddress")
-            filters.add(ScanFilter.Builder().setDeviceAddress(bluetoothAddress).build())
+        Log.d(TAG, "Rescan with address $bluetoothAddress")
+        if(address != applicationContext.getString(R.string.default_device_address)) {
+            Log.d(TAG, "Filter: bluetoothAddress: $address")
+            filters.add(ScanFilter.Builder().setDeviceAddress(address).build())
         }
 
-        if (bluetoothName != applicationContext.getString(R.string.default_device_name)) {
-            filters.add(ScanFilter.Builder().setDeviceName(bluetoothName).build())
+        if (name != applicationContext.getString(R.string.default_device_name)) {
+            filters.add(ScanFilter.Builder().setDeviceName(name).build())
         }
 
         Log.d(TAG, "Запуск сканирования, фильтры: $filters")
@@ -228,7 +230,8 @@ class BtLeScanService: Service() {
      */
     @DelicateCoroutinesApi
     fun scanLeDevices(address:String = applicationContext.getString(R.string.default_device_address),
-                      name:String = applicationContext.getString(R.string.default_device_name)) {
+              name:String = applicationContext.getString(R.string.default_device_name)) {
+        Log.d(TAG, "scanLeDevices $address, $name")
         if(address != applicationContext.getString(R.string.default_device_address)) {
             bluetoothAddress = address
         }
@@ -240,9 +243,9 @@ class BtLeScanService: Service() {
         Log.d(TAG, "scanLeDevices ${sharedState.value}")
         if(sharedState.value == State.Scan) {
             stopScan()
-            startScan()
+            startScan(address, name)
         } else {
-            startScan()
+            startScan(address, name)
         }
     }
 

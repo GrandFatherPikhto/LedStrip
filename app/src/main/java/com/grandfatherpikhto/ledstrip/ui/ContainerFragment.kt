@@ -86,7 +86,6 @@ class ContainerFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onStart() {
         super.onStart()
-        Log.d(TAG, "onStart()")
         sharedPreferences.apply {
             containerViewModel.changePage(getInt(CURRENT_PAGE, 0))
         }
@@ -97,8 +96,6 @@ class ContainerFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onStop() {
         super.onStop()
-        Log.d(TAG, "onStop()")
-        BtLeServiceConnector.service.value?.close()
         sharedPreferences.edit {
             putInt(CURRENT_PAGE, containerViewModel.page.value!!)
             commit()
@@ -107,8 +104,7 @@ class ContainerFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        Log.d(TAG, "onDestroyView ${BtLeServiceConnector.service.value}")
-        //
+        Log.d(TAG, "onDestroyView ${BtLeServiceConnector.service}")
     }
 
     override fun onDestroy() {

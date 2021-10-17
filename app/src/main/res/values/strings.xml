@@ -45,5 +45,7 @@
     <string name="tvSpeedTag">Speed</string>
     <string name="tvWaterBrightness">Brightness</string>
     <string name="tvTailLen">Length</string>
+    <string name="led_strip_preferences">Ledstrip</string>
+    <string name="preference_ledstrip_length">Ledstrip Length</string>
     <!-- TODO: Remove or change this placeholder text -->
 </resources>

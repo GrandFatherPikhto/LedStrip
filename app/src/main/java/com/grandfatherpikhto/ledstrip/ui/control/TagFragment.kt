@@ -40,11 +40,13 @@ class TagFragment : Fragment() {
         // return inflater.inflate(R.layout.fragment_tag, container, false)
         _binding = FragmentTagBinding.inflate(inflater, container, false)
         binding.apply {
-            swEnableTag.setOnCheckedChangeListener { _, state ->
-                if(state) {
-                    ledstripViewModel.changeRegime(BtLeService.Regime.Tag)
-                } else {
-                    ledstripViewModel.changeRegime(BtLeService.Regime.Off)
+            swEnableTag.setOnCheckedChangeListener { _, enabled ->
+                if( enabled != ledstripViewModel.regime.value?.enabled ) {
+                    if (enabled) {
+                        ledstripViewModel.changeRegime(BtLeService.Regime.Tag)
+                    } else {
+                        ledstripViewModel.changeRegime(BtLeService.Regime.Off)
+                    }
                 }
             }
             ledstripViewModel.regime.observe (viewLifecycleOwner, { value ->

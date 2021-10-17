@@ -34,9 +34,6 @@ class SplashFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val splashViewModel:SplashViewModel by viewModels()
-    private lateinit var sharedPreferences:SharedPreferences
-    private lateinit var deviceAddress:String
-    private lateinit var deviceName:String
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreateView(
@@ -45,28 +42,12 @@ class SplashFragment : Fragment() {
     ): View? {
 
         _binding = FragmentSplashBinding.inflate(inflater, container, false)
-        sharedPreferences = requireActivity().getSharedPreferences(AppConst.PREFERENCES, Context.MODE_PRIVATE).apply {
-            deviceAddress = getString(AppConst.DEVICE_ADDRESS, getString(R.string.default_device_address)).toString()
-            deviceName = getString(AppConst.DEVICE_NAME, getString(R.string.default_device_name)).toString()
-        }
         return binding.root
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        splashViewModel.service.observe(viewLifecycleOwner, { service ->
-            if(service != null) {
-                Log.d(TAG, "Пытаемся подключиться: $deviceAddress, ${BtLeServiceConnector.service.value}")
-                BtLeServiceConnector.service.value?.close()
-                BtLeServiceConnector.service.value?.connect(deviceAddress)
-            }
-        })
-        splashViewModel.state.observe(viewLifecycleOwner, { state ->
-            if(state == BtLeService.State.Discovered) {
-                findNavController().navigate(R.id.ContainerFragment)
-            }
-        })
     }
 
     override fun onDestroyView() {

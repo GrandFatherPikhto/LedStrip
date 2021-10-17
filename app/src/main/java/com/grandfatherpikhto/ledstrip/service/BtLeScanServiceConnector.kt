@@ -16,11 +16,8 @@ import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.helper.AppConst
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collect
 import java.util.*
 
 object BtLeScanServiceConnector:ServiceConnection {
@@ -28,7 +25,7 @@ object BtLeScanServiceConnector:ServiceConnection {
 
     /** Геттер для сервиса */
     private val sharedService = MutableStateFlow<BtLeScanService?>(null)
-    val service= sharedService
+    val service: StateFlow<BtLeScanService> get() = sharedService as StateFlow<BtLeScanService>
 
     private val sharedDevice = MutableSharedFlow<BtLeDevice>(
         replay = 100,

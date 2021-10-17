@@ -36,4 +36,6 @@
     <string name="tvSpeedTag">Скорость</string>
     <string name="tvWaterBrightness">Яркость</string>
     <string name="tvTailLen">Длина</string>
+    <string name="led_strip_preferences">Светодиодная лента</string>
+    <string name="preference_ledstrip_length">Длина</string>
 </resources>

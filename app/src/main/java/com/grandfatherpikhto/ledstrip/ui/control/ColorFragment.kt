@@ -32,6 +32,11 @@ class ColorFragment : Fragment() {
 
     private lateinit var sharedPreferences: SharedPreferences
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate()")
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -41,11 +46,13 @@ class ColorFragment : Fragment() {
         sharedPreferences = requireContext().getSharedPreferences(NAME, Context.MODE_PRIVATE)
         _binding = FragmentColorBinding.inflate(inflater, container, false)
         binding.apply {
-            switchEnableColor.setOnCheckedChangeListener { _, state ->
-                if(state) {
-                    ledstripViewModel.changeRegime(BtLeService.Regime.Color)
-                } else {
-                    ledstripViewModel.changeRegime(BtLeService.Regime.Off)
+            switchEnableColor.setOnCheckedChangeListener { _, enabled ->
+                if( enabled != ledstripViewModel.regime.value?.enabled ) {
+                    if (enabled) {
+                        ledstripViewModel.changeRegime(BtLeService.Regime.Color)
+                    } else {
+                        ledstripViewModel.changeRegime(BtLeService.Regime.Off)
+                    }
                 }
             }
 
@@ -86,9 +93,15 @@ class ColorFragment : Fragment() {
 
     override fun onPause() {
         super.onPause()
+        Log.d(TAG, "onPause()")
         sharedPreferences.edit {
             ledstripViewModel.color.value?.let { putInt(COLOR, it) }
             ledstripViewModel.regime.value?.let { putInt(REGIME, ledstripViewModel.regime.value!!.value) }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy()")
     }
 }

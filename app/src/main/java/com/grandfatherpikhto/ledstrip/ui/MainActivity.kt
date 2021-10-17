@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -16,8 +17,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import com.grandfatherpikhto.ledstrip.LedstripApplication
@@ -25,13 +26,13 @@ import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.ActivityMainBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
 import com.grandfatherpikhto.ledstrip.service.*
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
 
 class MainActivity : AppCompatActivity() {
     companion object {
         const val TAG = "MainActivity"
-        const val ADDRESS = "52:D6:00:67:CC:0E"
     }
 
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -40,29 +41,36 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var deviceAddress: String
     private lateinit var deviceName: String
-    private var state:State = State.Splash
+    private var currentFragment:Fragments = Fragments.Splash
+    private var currentState:State = State.Connect
 
-    enum class State(val value: Int) {
+    enum class Fragments(val value: Int) {
         Scan(R.id.ScanFragment),
         Splash(R.id.SplashFragment),
         Container(R.id.ContainerFragment),
         Settings(R.id.SettingsFragment);
 
         fun isScan():Boolean {
-            return this.value == R.id.ScanFragment
+            return this.value == Scan.value
         }
 
         fun isSplah():Boolean {
-            return this.value == R.id.SplashFragment
+            return this.value == Splash.value
         }
 
         fun isContainer():Boolean {
-            return this.value == R.id.ContainerFragment
+            return this.value == Container.value
         }
 
         fun isSettings():Boolean {
-            return this.value == R.id.SettingsFragment
+            return this.value == Settings.value
         }
+    }
+
+    enum class State(val value: Int) {
+        Scan(0x01),
+        Connect(0x02),
+        Settings(0x03)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,7 +82,6 @@ class MainActivity : AppCompatActivity() {
                 AppConst.DEVICE_ADDRESS,
                 getString(R.string.default_device_address)
             ).toString()
-            deviceAddress = ADDRESS
             deviceName =
                 getString(AppConst.DEVICE_NAME, getString(R.string.default_device_name)).toString()
         }
@@ -92,9 +99,14 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        requestPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+        requestPermissions(
+            mutableListOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
+        )
         doBindServices()
-        navigateStart()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -109,13 +121,11 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.itemDevicesList -> {
-                BtLeServiceConnector.close()
-                deviceAddress = getString(R.string.default_device_address)
-                setState(State.Scan)
+                doScan()
                 true
             }
             R.id.action_settings -> {
-                setState(State.Settings)
+                doSettings()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -128,8 +138,11 @@ class MainActivity : AppCompatActivity() {
                 || super.onSupportNavigateUp()
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onStart() {
         super.onStart()
+        Log.d(TAG, "onStart()")
+        readPreferences()
         doBindServices()
         bindNavigate()
     }
@@ -210,76 +223,63 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun navigateFragment(fragment: Fragments) {
+        if(navController.currentDestination?.id != fragment.value) {
+            navController.navigate(fragment.value)
+            currentFragment = fragment
+        }
+    }
+
+    @DelicateCoroutinesApi
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun bindNavigate() {
         lifecycleScope.launch {
-            BtLeServiceConnector.service.collect { service ->
-                if (service != null) {
-                    Log.d(TAG, "Сервис виден")
+            BtLeServiceConnector.bond.collect { bond ->
+                if (bond) {
                     BtLeServiceConnector.state.collect { state ->
-                        when (state) {
-                            BtLeService.State.Disconnected -> {
-                                Log.d(TAG, "Disconnected")
-                                if (navController.currentDestination?.id != R.id.SplashFragment
-                                    && deviceAddress != getString(R.string.default_device_address)
-                                ) {
-                                    setState(State.Splash)
-                                }
-                            }
-                            BtLeService.State.Discovered -> {
-                                if (navController.currentDestination?.id != R.id.ContainerFragment
-                                    && deviceAddress != getString(R.string.default_device_address)
-                                ) {
-                                    setState(State.Container)
-                                }
-                            }
-                            else -> {
-                                if(navController.currentDestination?.id != R.id.ScanFragment
-                                    && deviceAddress == getString(R.string.default_device_address)) {
-                                    setState(State.Splash)
-                                }
-                            }
-                        }
+                        readPreferences()
+                        Log.d(TAG, "State: $state $deviceAddress")
+                        doNavigate(state, BtLeServiceConnector.service!!)
                     }
                 }
             }
         }
     }
 
-    private fun setState(value: State) {
-        when (value) {
-            State.Scan -> {
-                if(!state.isScan()) {
-                    navController.navigate(State.Scan.value)
-                }
-            }
-            State.Splash -> {
-                if(!state.isSplah()) {
-                    navController.navigate(State.Splash.value)
-                }
-            }
-            State.Container -> {
-                if(!state.isContainer()) {
-                    navController.navigate(State.Container.value)
-                }
-            }
-            State.Settings -> {
-                if(!state.isSettings()) {
-                    navController.navigate(State.Settings.value)
-                }
-            }
-        }
-        state = value
-    }
 
-    private fun navigateStart() {
-        Log.d(TAG, deviceAddress)
-        lifecycleScope.launch {
-            if (deviceAddress == getString(R.string.default_device_address)
-                && navController.currentDestination?.id != R.id.ScanFragment
-            ) {
-                if (navController.currentDestination?.id != R.id.ScanFragment) {
-                    navController.navigate(R.id.ScanFragment)
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun doNavigate(state:BtLeService.State, service:BtLeService) {
+        when(state) {
+            BtLeService.State.Disconnected -> {
+                when(currentState) {
+                    State.Connect -> {
+                        readPreferences()
+                        service?.connect(deviceAddress)
+                        navigateFragment(Fragments.Splash)
+                    }
+                    State.Scan -> {
+                        service?.close()
+                        navigateFragment(Fragments.Scan)
+                    }
+                    State.Settings -> {
+                        service?.close()
+                        navigateFragment(Fragments.Settings)
+                    }
                 }
+            }
+            BtLeService.State.Connecting -> {
+                currentState = State.Connect
+                navigateFragment(Fragments.Splash)
+            }
+            BtLeService.State.Discovered -> {
+                navigateFragment(Fragments.Container)
+            }
+            BtLeService.State.RequestScan -> {
+                currentState = State.Scan
+                navigateFragment(Fragments.Scan)
+            }
+            else -> {
+
             }
         }
     }
@@ -300,5 +300,24 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "doUnbindServices()")
         unbindService(BtLeServiceConnector)
         unbindService(BtLeScanServiceConnector)
+    }
+
+    private fun doScan() {
+        currentState = State.Scan
+        BtLeServiceConnector.close()
+        deviceAddress = getString(R.string.default_device_address)
+        navigateFragment(Fragments.Scan)
+    }
+
+    private fun doSettings() {
+        currentState = State.Settings
+        BtLeServiceConnector.close()
+        navigateFragment(Fragments.Settings)
+    }
+
+    private fun readPreferences() {
+        sharedPreferences.apply {
+            deviceAddress = getString(AppConst.DEVICE_ADDRESS, getString(R.string.default_device_address)).toString()
+        }
     }
 }

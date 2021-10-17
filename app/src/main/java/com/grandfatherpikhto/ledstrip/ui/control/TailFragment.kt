@@ -40,11 +40,13 @@ class TailFragment : Fragment() {
         _binding = FragmentTailBinding.inflate(inflater, container, false)
         sharedPreferences = requireContext().getSharedPreferences(NAME, Context.MODE_PRIVATE)
         binding.apply {
-            swEnableTail.setOnCheckedChangeListener { _, state ->
-                if(state) {
-                    ledstripViewModel.changeRegime(BtLeService.Regime.Tail)
-                } else {
-                    ledstripViewModel.changeRegime(BtLeService.Regime.Off)
+            swEnableTail.setOnCheckedChangeListener { _, enabled ->
+                if( enabled != ledstripViewModel.regime.value?.enabled ) {
+                    if (enabled) {
+                        ledstripViewModel.changeRegime(BtLeService.Regime.Tail)
+                    } else {
+                        ledstripViewModel.changeRegime(BtLeService.Regime.Off)
+                    }
                 }
             }
 

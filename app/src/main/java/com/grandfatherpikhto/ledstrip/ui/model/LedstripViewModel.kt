@@ -17,81 +17,85 @@ class LedstripViewModel:ViewModel() {
 
     private var service:BtLeService ?= null
 
-    private val _state = MutableLiveData<BtLeService.State> ()
-    val state
-        get() = _state
-    private val _regime = MutableLiveData<BtLeService.Regime> ()
+    private val sharedBond = MutableLiveData<Boolean>(false)
+    val bond:LiveData<Boolean> = sharedBond
+
+    private val sharedState = MutableLiveData<BtLeService.State> ()
+    val state:LiveData<BtLeService.State>
+        get() = sharedState as LiveData<BtLeService.State>
+
+    private val sharedRegime = MutableLiveData<BtLeService.Regime> ()
     val regime
-        get() = _regime
-    private val _color = MutableLiveData<Int> ()
+        get() = sharedRegime
+    private val sharedColor = MutableLiveData<Int> ()
     val color
-        get() = _color
-    private val _frequency = MutableLiveData<Float>(20F)
+        get() = sharedColor
+    private val sharedFrequency = MutableLiveData<Float>(20F)
     val frequency: LiveData<Float>
-        get() = _frequency
-    private val _speed = MutableLiveData<Float>(50F)
+        get() = sharedFrequency
+    private val sharedSpeed = MutableLiveData<Float>(50F)
     val speed: LiveData<Float>
-        get() = _speed
-    private val _length = MutableLiveData<Float>(25F)
+        get() = sharedSpeed
+    private val sharedLength = MutableLiveData<Float>(25F)
     val length: LiveData<Float>
-        get() = _length
-    private val _brightness = MutableLiveData<Float>(100F)
+        get() = sharedLength
+    private val sharedBrightness = MutableLiveData<Float>(100F)
     val brightness: LiveData<Float>
-        get() = _brightness
+        get() = sharedBrightness
 
     init {
         viewModelScope.launch {
-            BtLeServiceConnector.service.collect { value ->
-                service = value
+            BtLeServiceConnector.bond.collect { bond ->
+                service = BtLeServiceConnector.service
+                sharedBond.postValue(bond)
             }
         }
         viewModelScope.launch {
             BtLeServiceConnector.state.collect { value ->
-                _state.value = value
-                state.postValue(value)
+                sharedState.postValue(value)
             }
         }
         viewModelScope.launch {
             BtLeServiceConnector.regime.collect { value ->
-                _regime.postValue(value)
+                sharedRegime.postValue(value)
             }
         }
         viewModelScope.launch {
             BtLeServiceConnector.color.collect { value ->
-                _color.postValue(value)
+                sharedColor.postValue(value)
             }
         }
     }
 
     @DelicateCoroutinesApi
     fun changeRegime(value:BtLeService.Regime) {
-        _regime.value = value
+        sharedRegime.value = value
         service?.writeRegime(value)
     }
 
     @DelicateCoroutinesApi
     fun changeColor(value:Int) {
-        _color.value = value
+        sharedColor.value = value
         service?.writeColor(value)
     }
 
     fun changeFrequency(value:Float) {
-        _frequency.value = value
+        sharedFrequency.value = value
         service?.writeFrequency(value)
     }
 
     fun changeSpeed(value:Float) {
-        _speed.value = value
+        sharedSpeed.value = value
         service?.writeSpeed(value)
     }
 
     fun changeLength(value:Float) {
-        _length.value = value
+        sharedLength.value = value
         service?.writeLength(value)
     }
 
     fun changeBrightness(value:Float) {
-        _brightness.value = value
+        sharedBrightness.value = value
         service?.writeBrightness(value)
     }
 }

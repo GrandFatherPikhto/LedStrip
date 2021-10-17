@@ -38,11 +38,13 @@ class WaterFragment : Fragment() {
         sharedPreferences = requireContext().getSharedPreferences(NAME, Context.MODE_PRIVATE)
         _binding = FragmentWaterBinding.inflate(inflater, container, false)
         binding.apply {
-            swWaterEnable.setOnCheckedChangeListener { _, state ->
-                if(state) {
-                    ledstripViewModel.changeRegime(BtLeService.Regime.Water)
-                } else {
-                    ledstripViewModel.changeRegime(BtLeService.Regime.Off)
+            swWaterEnable.setOnCheckedChangeListener { _, enabled ->
+                if( enabled != ledstripViewModel.regime.value?.enabled ) {
+                    if (enabled) {
+                        ledstripViewModel.changeRegime(BtLeService.Regime.Water)
+                    } else {
+                        ledstripViewModel.changeRegime(BtLeService.Regime.Off)
+                    }
                 }
             }
             ledstripViewModel.regime.observe (viewLifecycleOwner, { value ->
