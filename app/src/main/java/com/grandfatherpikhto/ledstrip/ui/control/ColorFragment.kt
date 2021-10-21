@@ -74,23 +74,23 @@ class ColorFragment : Fragment() {
                 }
             })
 
+
             pickerColor.addValueBar(valueColor)
+            pickerColor.addSaturationBar(saturationColor)
             pickerColor.showOldCenterColor = true
+            var i = 0
 
             pickerColor.onColorChangedListener = ColorPicker.OnColorChangedListener { value ->
-                val color = valueColor.color
-                if(value == color) {
-                    if (ledstripViewModel.color.value != color) {
-                        ledstripViewModel.changeColor(color)
+                if (i == 3) {
+                    if (value != ledstripViewModel.color.value) {
+                        ledstripViewModel.changeColor(value)
                     }
-                } else {
+                    i = 0
+                } else if (i == 1){
                     pickerColor.oldCenterColor = value
-                }
-            }
-
-            valueColor.onValueChangedListener = ValueBar.OnValueChangedListener { color ->
-                if (ledstripViewModel.color.value != color) {
-                    ledstripViewModel.changeColor(color)
+                    i++
+                } else {
+                    i++
                 }
             }
         }

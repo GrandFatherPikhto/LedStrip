@@ -24,13 +24,17 @@ object BtLeScanServiceConnector:ServiceConnection {
     const val TAG = "ScannerConnector"
 
     /** Геттер для сервиса */
-    private val sharedService = MutableStateFlow<BtLeScanService?>(null)
-    val service: StateFlow<BtLeScanService> get() = sharedService as StateFlow<BtLeScanService>
+    private var btLeScanService:BtLeScanService ?= null
+    val service:BtLeScanService? get() = btLeScanService
+
+    private val isBound = MutableStateFlow(false)
+    val bound:StateFlow<Boolean> get() = isBound.asStateFlow()
 
     private val sharedDevice = MutableSharedFlow<BtLeDevice>(
         replay = 100,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
+
     val device:SharedFlow<BtLeDevice> = sharedDevice
 
     private val sharedState = MutableStateFlow<BtLeScanService.State>(BtLeScanService.State.Stop)
@@ -41,27 +45,26 @@ object BtLeScanServiceConnector:ServiceConnection {
     @ExperimentalCoroutinesApi
     @InternalCoroutinesApi
     override fun onServiceConnected(componentName: ComponentName?, binderService: IBinder?) {
-        val btLeScanService = (binderService as BtLeScanService.LocalBinder).getService()
+        btLeScanService = (binderService as BtLeScanService.LocalBinder).getService()
+        isBound.tryEmit(true)
+
         GlobalScope.launch {
-            sharedService.tryEmit(btLeScanService)
             btLeScanService!!.state.collect { state ->
                 sharedState.tryEmit(state)
             }
         }
         GlobalScope.launch {
             btLeScanService!!.device.collect{ item ->
-                sharedDevice.tryEmit(item)
+                if(item != null) {
+                    sharedDevice.tryEmit(item)
+                }
             }
         }
     }
 
     override fun onServiceDisconnected(p0: ComponentName?) {
         GlobalScope.launch {
-            sharedService.tryEmit(null)
+            isBound.tryEmit(false)
         }
-    }
-
-    fun stop() {
-        sharedService.value?.stopScan()
     }
 }

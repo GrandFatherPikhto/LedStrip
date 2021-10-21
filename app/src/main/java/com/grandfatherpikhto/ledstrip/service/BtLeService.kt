@@ -11,7 +11,6 @@ import androidx.annotation.RequiresApi
 import androidx.preference.PreferenceManager
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.helper.toByteArray
-import com.grandfatherpikhto.ledstrip.helper.toHex
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -38,6 +37,8 @@ class BtLeService:Service() {
         const val BUFFER_BRIGHTNESS_CAPACITY = 0x100
         const val BUFFER_FREQUENCY_CAPACITY  = 0x100
         const val BUFFER_LEDSTRIP_LENGTH_CAPACITY = 0x10
+
+        const val MAX_TRY_CONNECT            = 3
 
         val UUID_SERVICE_LEDSTRIP:        UUID by lazy { UUID.fromString("000000ff-6418-5c4b-a046-0101910b5ad4") }
         val UUID_SERVICE_CHAR_REGIME:     UUID by lazy { UUID.fromString("0000ff01-6418-5c4b-a046-0101910b5ad4") }
@@ -126,8 +127,7 @@ class BtLeService:Service() {
 
 
     /** Адрес подключённого устройства */
-    private val sharedAddress = MutableStateFlow(DEFAULT_ADDRESS)
-    val address:StateFlow<String> = sharedAddress
+    private var bluetoothAddress:String = String()
 
     private val sharedState = MutableStateFlow<State>(State.Disconnected)
     val state:SharedFlow<State> = sharedState
@@ -162,6 +162,8 @@ class BtLeService:Service() {
 
     private val charWriteMutex = Mutex()
 
+    private var tryConnectCounter = 0
+
     /**
      *
      */
@@ -187,7 +189,7 @@ class BtLeService:Service() {
                         if(bondState == BluetoothDevice.BOND_BONDED) {
                             GlobalScope.launch {
                                 sharedPairing.tryEmit(Pairing.Paired)
-                                doConnect()
+                                doRescanDevice()
                             }
                         }
                     }
@@ -230,6 +232,7 @@ class BtLeService:Service() {
                             // Log.d(TAG, "Ошибка. Не можем исследовать сервисы")
                         }
                     }
+                    tryConnectCounter = 0
                 }
                 BluetoothProfile.STATE_DISCONNECTING -> {
                     sharedState.tryEmit(State.Disconnecting)
@@ -241,7 +244,12 @@ class BtLeService:Service() {
                 // Log.d(TAG, "onConnectionStateChange $status $newState")
                 close()
                 // rescanDeviceByAddress()
-                connect()
+                if (tryConnectCounter >= MAX_TRY_CONNECT - 1) {
+                    sharedState.tryEmit(State.RequestScan)
+                } else {
+                    doRescanDevice()
+                    tryConnectCounter++
+                }
             }
         }
 
@@ -333,6 +341,7 @@ class BtLeService:Service() {
     /**
      * Создание сервиса. Первичная инициализация
      */
+    @RequiresApi(Build.VERSION_CODES.M)
     @DelicateCoroutinesApi
     override fun onCreate() {
         super.onCreate()
@@ -346,6 +355,20 @@ class BtLeService:Service() {
         bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
         applicationContext.registerReceiver(broadcastReceiver, makeIntentFilter())
+
+        GlobalScope.launch {
+            BtLeScanServiceConnector.bound.collect { bound ->
+                if(bound) {
+                    BtLeScanServiceConnector.service?.addressDevice?.collect { device ->
+                        if(device != null) {
+                            Log.d(TAG, "Подключение после рескана $bluetoothAddress")
+                            bluetoothAddress = device.address
+                            doConnect()
+                        }
+                    }
+                }
+            }
+        }
 
         GlobalScope.launch {
             while(true) {
@@ -458,11 +481,13 @@ class BtLeService:Service() {
 
     @DelicateCoroutinesApi
     @RequiresApi(Build.VERSION_CODES.M)
-    fun connect(newAddress:String = address.value) {
+    fun connect(newAddress:String = bluetoothAddress) {
         // Log.d(TAG, "connect: $newAddress")
+        BtLeScanServiceConnector.service?.stopScan()
+
         if(newAddress.isNotEmpty() && newAddress != defaultAddress) {
             if(newAddress != applicationContext.getString(R.string.default_device_address)) {
-                sharedAddress.tryEmit(newAddress)
+                bluetoothAddress = newAddress
                 // Log.d(TAG, "Пробуем подключиться к $newAddress")
                 bluetoothDevice = bluetoothAdapter.getRemoteDevice(newAddress)
                 if(bluetoothDevice != null) {
@@ -470,7 +495,7 @@ class BtLeService:Service() {
                         // Log.d(TAG, "Пытаюсь сопрячь устройство ")
                         bluetoothDevice!!.createBond()
                     } else {
-                        doConnect()
+                        doRescanDevice()
                     }
                 } else {
                     // Log.d(TAG, "Не могу получить удалённое устройство ${address.value}")
@@ -526,12 +551,7 @@ class BtLeService:Service() {
     @RequiresApi(Build.VERSION_CODES.M)
     @DelicateCoroutinesApi
     fun doRescanDevice() {
-        // Log.d(TAG, "Пересканирование с адресом: ${address.value}")
-        BtLeScanServiceConnector.service.value?.scanLeDevices()
-        GlobalScope.launch {
-            delay(100)
-            // connect()
-        }
+        BtLeScanServiceConnector.service?.scanLeDevices(bluetoothAddress)
     }
 
     /**

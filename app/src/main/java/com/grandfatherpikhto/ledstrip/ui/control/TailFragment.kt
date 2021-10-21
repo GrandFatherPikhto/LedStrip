@@ -60,29 +60,19 @@ class TailFragment : Fragment() {
             })
 
             pickerTail.addValueBar(valueTail)
+            pickerTail.addSaturationBar(saturationTail)
+            var i = 0
             pickerTail.onColorChangedListener = ColorPicker.OnColorChangedListener { value ->
-                val color = valueTail.color
-                if (color == value) {
+                if (i == 3) {
                     if( ledstripViewModel.color.value != value ) {
                         ledstripViewModel.changeColor(value)
                     }
+                    i = 0
                 } else {
                     pickerTail.oldCenterColor = value
+                    i ++
                 }
             }
-
-            valueTail.onValueChangedListener = ValueBar.OnValueChangedListener { value ->
-                if( ledstripViewModel.color.value != value ) {
-                    ledstripViewModel.changeColor(value)
-                }
-            }
-
-            ledstripViewModel.color.observe(viewLifecycleOwner, { value ->
-                if(pickerTail.color != value) {
-                    pickerTail.color = value
-                }
-            })
-
 
             slTailSpeed.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {

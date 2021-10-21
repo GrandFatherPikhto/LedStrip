@@ -12,44 +12,38 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/pickerTail">
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/swEnableTail"
+        <TextView
+            android:id="@+id/tvTitleTail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/switchEnable"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="@string/tvTitleTail"
+            android:textSize="34sp"
+            app:layout_constraintBottom_toTopOf="@+id/valueTail"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/slTailWidth" />
-
-        <TextView
-            android:id="@+id/tvTailSpeed"
-            android:layout_width="35dp"
-            android:layout_height="14dp"
-            android:text="@string/tvTailSpeed"
-            app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/valueTail" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <com.larswerkman.holocolorpicker.ValueBar
             android:id="@+id/valueTail"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/saturationTail"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvTitleTail" />
 
-        <TextView
-            android:id="@+id/tvTailLen"
-            android:layout_width="wrap_content"
+        <com.larswerkman.holocolorpicker.SaturationBar
+            android:id="@+id/saturationTail"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/tvTailLen"
-            app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/slTailSpeed" />
+            app:layout_constraintTop_toBottomOf="@+id/valueTail" />
 
         <com.google.android.material.slider.Slider
             android:id="@+id/slTailSpeed"
@@ -62,18 +56,7 @@
             app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/valueTail" />
-
-        <TextView
-            android:id="@+id/tvTitleTail"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tvTitleTail"
-            android:textSize="34sp"
-            app:layout_constraintBottom_toTopOf="@+id/valueTail"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/saturationTail" />
 
         <com.google.android.material.slider.Slider
             android:id="@+id/slTailWidth"
@@ -87,6 +70,17 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/slTailSpeed" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swEnableTail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/switchEnable"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/slTailWidth" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.larswerkman.holocolorpicker.ColorPicker

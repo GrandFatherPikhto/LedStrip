@@ -71,14 +71,19 @@ class BlinkFragment : Fragment() {
             })
 
             pickerBlink.addValueBar(valueBlink)
+            pickerBlink.addSaturationBar(saturationBlink)
+            var i = 0
             pickerBlink.onColorChangedListener = ColorPicker.OnColorChangedListener { value ->
-                val color = valueBlink.color
-                if (color == value) {
-                    if( ledstripViewModel.color.value != color ) {
-                        ledstripViewModel.changeColor(color)
+                if (i == 3) {
+                    if (ledstripViewModel.color.value != value) {
+                        if( ledstripViewModel.color.value != value ) {
+                            ledstripViewModel.changeColor(value)
+                        }
                     }
+                    i = 0
                 } else {
                     pickerBlink.oldCenterColor = value
+                    i ++
                 }
             }
 

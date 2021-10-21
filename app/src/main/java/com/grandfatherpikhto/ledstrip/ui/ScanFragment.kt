@@ -89,9 +89,9 @@ class ScanFragment : Fragment() {
                     menuItemScanStart?.setTitle(R.string.start_scan)
                 }
             })
-            scanViewModel.service.observe(viewLifecycleOwner, { service ->
-                btLeScanService = service
-                btLeScanService?.scanLeDevices()
+            scanViewModel.bound.observe(viewLifecycleOwner, { isBond ->
+                btLeScanService = BtLeScanServiceConnector.service
+                btLeScanService?.scanLeDevices(name = AppConst.DEFAULT_NAME)
             })
         }
 
@@ -115,7 +115,7 @@ class ScanFragment : Fragment() {
         return when(item.itemId) {
             R.id.itemStartScan -> {
                 scanViewModel.clean()
-                btLeScanService?.scanLeDevices()
+                btLeScanService?.scanLeDevices(name = AppConst.DEFAULT_NAME)
                 true
             }
             R.id.itemPairedDevices -> {
@@ -134,13 +134,13 @@ class ScanFragment : Fragment() {
 
     override fun onPause() {
         super.onPause()
-        BtLeScanServiceConnector.service.value?.stopScan()
+        BtLeScanServiceConnector.service?.stopScan()
         Log.d(TAG, "onPause()")
     }
 
     @DelicateCoroutinesApi
     override fun onDestroyView() {
-        BtLeScanServiceConnector.service.value?.stopScan()
+        BtLeScanServiceConnector.service?.stopScan()
         super.onDestroyView()
         _binding = null
     }
@@ -148,7 +148,7 @@ class ScanFragment : Fragment() {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun connectBTDevice(btLeDevice: BtLeDevice) {
-        BtLeScanServiceConnector.stop()
+        BtLeScanServiceConnector.service?.stopScan()
         sharedPreferences.edit {
             putString(AppConst.DEVICE_ADDRESS, btLeDevice.address)
             putString(AppConst.DEVICE_NAME, btLeDevice.name)

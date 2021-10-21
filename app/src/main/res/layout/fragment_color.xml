@@ -6,14 +6,16 @@
     android:layout_height="match_parent"
     tools:context=".ui.control.ColorFragment">
 
-    <com.larswerkman.holocolorpicker.ValueBar
-        android:id="@+id/valueColor"
+    <TextView
+        android:id="@+id/tvTitleColor"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/switchEnableColor"
+        android:text="@string/tvTitleColor"
+        android:textSize="34sp"
+        app:layout_constraintBottom_toTopOf="@+id/pickerColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pickerColor" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.larswerkman.holocolorpicker.ColorPicker
         android:id="@+id/pickerColor"
@@ -23,6 +25,29 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvTitleColor" />
+
+    <com.larswerkman.holocolorpicker.ValueBar
+        android:id="@+id/valueColor"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/saturationColor"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pickerColor" />
+
+    <com.larswerkman.holocolorpicker.SaturationBar
+        android:id="@+id/saturationColor"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/switchEnableColor"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/valueColor" />
+
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switchEnableColor"
@@ -34,14 +59,4 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/valueColor" />
 
-    <TextView
-        android:id="@+id/tvTitleColor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/tvTitleColor"
-        android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@+id/pickerColor"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -18,10 +18,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -57,11 +54,11 @@ class BtLeScanService: Service() {
     /** */
     val state:StateFlow<State> = sharedState
     /** */
-    private val sharedDevice = MutableSharedFlow<BtLeDevice>(
-        replay = SHARED_DEVICE_BUFFER,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    val device: SharedFlow<BtLeDevice> = sharedDevice
+    private val sharedDevice = MutableStateFlow<BtLeDevice?>(null)
+    val device: StateFlow<BtLeDevice?> = sharedDevice
+
+    private val sharedAddressDevice = MutableStateFlow<BtLeDevice?>(null)
+    val addressDevice: StateFlow<BtLeDevice?> = sharedAddressDevice
 
     /**
      * Объект-получатель сообщений от процесса сканирования Блютуз-устройств
@@ -79,21 +76,24 @@ class BtLeScanService: Service() {
          * о том, что найдено устройство
          */
         fun addBtDevice(bluetoothDevice: BluetoothDevice) {
-            if(!bluetoothLeDevices.contains(bluetoothDevice)) {
-                bluetoothLeDevices.add(bluetoothDevice)
-                GlobalScope.launch {
-                    sharedDevice.tryEmit(bluetoothDevice.toBtLeDevice())
-                }
+            Log.d(TAG, "Filters: address: $bluetoothAddress, $bluetoothName")
+            if(!isDefaultAddress()) {
                 if(bluetoothAddress == bluetoothDevice.address) {
                     Log.d(TAG, "Найдено устройство, соответствующее фильтру $bluetoothAddress")
+                    sharedDevice.tryEmit(bluetoothDevice.toBtLeDevice())
+                    sharedAddressDevice.tryEmit(bluetoothDevice.toBtLeDevice())
                     stopScan()
                 }
 
-                if(bluetoothName != applicationContext.getString(R.string.default_device_name)
-                    && bluetoothName == bluetoothDevice.name) {
-                    stopScan()
-                    saveDevice(bluetoothDevice.toBtLeDevice())
+                saveDevice(bluetoothDevice.toBtLeDevice())
+            } else if(!isDefaultName()) {
+                Log.d(TAG, "Фильтруем по имени $bluetoothName")
+                if(bluetoothDevice.name == bluetoothName){
+                    Log.d(TAG, "Найдено устройство, соответствующее названию $bluetoothName")
+                    sharedDevice.tryEmit(bluetoothDevice.toBtLeDevice())
                 }
+            } else {
+                sharedDevice.tryEmit(bluetoothDevice.toBtLeDevice())
             }
         }
 
@@ -102,9 +102,7 @@ class BtLeScanService: Service() {
          */
         override fun onScanFailed(errorCode: Int) {
             super.onScanFailed(errorCode)
-            GlobalScope.launch {
-                sharedState.tryEmit(State.Stop)
-            }
+            sharedState.tryEmit(State.Stop)
             Log.d(tag, "Ошибка сканирования: $errorCode")
         }
 
@@ -115,11 +113,8 @@ class BtLeScanService: Service() {
         override fun onBatchScanResults(results: MutableList<ScanResult>?) {
             super.onBatchScanResults(results)
             results?.forEach { result ->
-                Log.d(tag, "[BatchScan] Найдено устройство: ${result.device.address}")
-                // addBtDevice(result.device)
-                GlobalScope.launch {
-                    sharedDevice.tryEmit(result.device.toBtLeDevice())
-                }
+                Log.d(tag, "[BatchScan] Найдено устройство: ${result.device.address} ${result.device.name}")
+                addBtDevice(result.device)
             }
         }
 
@@ -128,12 +123,9 @@ class BtLeScanService: Service() {
          */
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             super.onScanResult(callbackType, result)
-            Log.d(tag, "[Scan] Найдено устройство: ${result?.device?.address}")
+            Log.d(tag, "[Scan] Найдено устройство: ${result?.device?.address} ${result?.device?.name}")
             if(result != null && result.device != null) {
-                // addBtDevice(result.device)
-                GlobalScope.launch {
-                    sharedDevice.tryEmit(result.device.toBtLeDevice())
-                }
+                addBtDevice(result.device)
             }
         }
     }
@@ -178,6 +170,15 @@ class BtLeScanService: Service() {
         preferences = applicationContext.getSharedPreferences(AppConst.PREFERENCES, Context.MODE_PRIVATE)!!
         bluetoothAddress = applicationContext.getString(R.string.default_device_address)
         bluetoothName    = applicationContext.getString(R.string.default_device_name)
+
+        GlobalScope.launch {
+            BtLeServiceConnector.bond.collect { bond ->
+                if(bond) {
+                    BtLeServiceConnector.service?.close()
+                }
+            }
+        }
+
         if(!::bluetoothManager.isInitialized) {
             Log.w(TAG, "Инициализирую локальный блютуз менеджер")
             bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -199,29 +200,12 @@ class BtLeScanService: Service() {
      * Запуск сканирования
      */
     @DelicateCoroutinesApi
-    private fun startScan(address:String = applicationContext.getString(R.string.default_device_address),
-                          name:String = applicationContext.getString(R.string.default_device_name)) {
-        bluetoothLeDevices.clear()
-
+    private fun startScan() {
         val scanSettings: ScanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
             .build()
 
-        val filters:MutableList<ScanFilter> = mutableListOf(
-            // ScanFilter.Builder().setDeviceName(DEFAULT_DEVICE_NAME).build()
-        )
-
-        Log.d(TAG, "Rescan with address $bluetoothAddress")
-        if(address != applicationContext.getString(R.string.default_device_address)) {
-            Log.d(TAG, "Filter: bluetoothAddress: $address")
-            filters.add(ScanFilter.Builder().setDeviceAddress(address).build())
-        }
-
-        if (name != applicationContext.getString(R.string.default_device_name)) {
-            filters.add(ScanFilter.Builder().setDeviceName(name).build())
-        }
-
-        Log.d(TAG, "Запуск сканирования, фильтры: $filters")
+        val filters:MutableList<ScanFilter> = mutableListOf()
 
         bluetoothLeScanner.startScan(filters, scanSettings, leScanCallback)
         sharedState.tryEmit(State.Scan)
@@ -246,9 +230,9 @@ class BtLeScanService: Service() {
         Log.d(TAG, "scanLeDevices ${sharedState.value}")
         if(sharedState.value == State.Scan) {
             stopScan()
-            startScan(address, name)
+            startScan()
         } else {
-            startScan(address, name)
+            startScan()
         }
     }
 
@@ -324,5 +308,13 @@ class BtLeScanService: Service() {
                 Log.d(TAG, "Сопряжённое устройство $device")
             }
         }
+    }
+
+    fun isDefaultAddress():Boolean {
+        return bluetoothAddress == applicationContext.getString(R.string.default_device_address)
+    }
+
+    fun isDefaultName():Boolean {
+        return bluetoothName == applicationContext.getString(R.string.default_device_name)
     }
 }
