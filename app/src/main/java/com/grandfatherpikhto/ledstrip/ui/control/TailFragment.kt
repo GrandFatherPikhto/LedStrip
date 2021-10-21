@@ -14,6 +14,7 @@ import com.grandfatherpikhto.ledstrip.databinding.FragmentTailBinding
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.ui.model.LedstripViewModel
 import com.larswerkman.holocolorpicker.ColorPicker
+import com.larswerkman.holocolorpicker.ValueBar
 
 class TailFragment : Fragment() {
     companion object {
@@ -58,8 +59,19 @@ class TailFragment : Fragment() {
                 }
             })
 
-            pickerTail.addSVBar(svbarTail)
+            pickerTail.addValueBar(valueTail)
             pickerTail.onColorChangedListener = ColorPicker.OnColorChangedListener { value ->
+                val color = valueTail.color
+                if (color == value) {
+                    if( ledstripViewModel.color.value != value ) {
+                        ledstripViewModel.changeColor(value)
+                    }
+                } else {
+                    pickerTail.oldCenterColor = value
+                }
+            }
+
+            valueTail.onValueChangedListener = ValueBar.OnValueChangedListener { value ->
                 if( ledstripViewModel.color.value != value ) {
                     ledstripViewModel.changeColor(value)
                 }

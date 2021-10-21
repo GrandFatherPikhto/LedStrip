@@ -270,8 +270,18 @@ class BtLeService:Service() {
                             serviceLedstrip!!.getCharacteristic(UUID_SERVICE_CHAR_LSLENGTH)
 
                         charRegime?.writeType =
-                            BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                            BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
                         charColor?.writeType =
+                            BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                        charBrightness?.writeType =
+                            BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                        charLsLength?.writeType =
+                            BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                        charSpeed?.writeType =
+                            BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                        charFrequency?.writeType =
+                            BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                        charLength?.writeType =
                             BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 
                         // Log.d(TAG, "Сервис: ${serviceLedstrip!!.uuid}")
@@ -288,6 +298,13 @@ class BtLeService:Service() {
                         ) {
                             // Log.d( TAG, "Запись по умолчанию ${BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT}, signed: ${BluetoothGattCharacteristic.WRITE_TYPE_SIGNED}, ${BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE}" )
                         }
+
+                        if ((charBrightness?.properties?.and(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT))
+                            == BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                        ) {
+
+                        }
+
                         sharedState.tryEmit(State.Discovered)
                         // Log.d(TAG, "sharedState: ${sharedState.value}")
 

@@ -30,10 +30,10 @@
             app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/svbarTail" />
+            app:layout_constraintTop_toBottomOf="@+id/valueTail" />
 
-        <com.larswerkman.holocolorpicker.SVBar
-            android:id="@+id/svbarTail"
+        <com.larswerkman.holocolorpicker.ValueBar
+            android:id="@+id/valueTail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
@@ -62,7 +62,7 @@
             app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/svbarTail" />
+            app:layout_constraintTop_toBottomOf="@+id/valueTail" />
 
         <TextView
             android:id="@+id/tvTitleTail"
@@ -70,7 +70,7 @@
             android:layout_height="wrap_content"
             android:text="@string/tvTitleTail"
             android:textSize="34sp"
-            app:layout_constraintBottom_toTopOf="@+id/svbarTail"
+            app:layout_constraintBottom_toTopOf="@+id/valueTail"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

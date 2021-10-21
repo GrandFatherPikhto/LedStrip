@@ -63,7 +63,6 @@ class BlinkFragment : Fragment() {
                     }
                 }
             })
-            pickerBlink.addSVBar(svbarBlink)
 
             ledstripViewModel.color.observe(viewLifecycleOwner, { color ->
                 if(pickerBlink.color != color) {
@@ -71,9 +70,15 @@ class BlinkFragment : Fragment() {
                 }
             })
 
-            pickerBlink.onColorChangedListener = ColorPicker.OnColorChangedListener { color ->
-                if( ledstripViewModel.color.value != color ) {
-                    ledstripViewModel.changeColor(color)
+            pickerBlink.addValueBar(valueBlink)
+            pickerBlink.onColorChangedListener = ColorPicker.OnColorChangedListener { value ->
+                val color = valueBlink.color
+                if (color == value) {
+                    if( ledstripViewModel.color.value != color ) {
+                        ledstripViewModel.changeColor(color)
+                    }
+                } else {
+                    pickerBlink.oldCenterColor = value
                 }
             }
 

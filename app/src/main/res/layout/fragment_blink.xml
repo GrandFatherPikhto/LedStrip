@@ -10,14 +10,14 @@
         android:id="@+id/pickerBlink"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/svbarBlink"
+        app:layout_constraintBottom_toTopOf="@+id/valueBlink"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvTitleBlink" />
 
-    <com.larswerkman.holocolorpicker.SVBar
-        android:id="@+id/svbarBlink"
+    <com.larswerkman.holocolorpicker.ValueBar
+        android:id="@+id/valueBlink"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/slBlinkFrequency"
@@ -35,12 +35,12 @@
         android:stepSize="1"
         android:value="20.0"
         android:valueFrom="1.00"
-        android:valueTo="30"
+        android:valueTo="25"
         app:layout_constraintBottom_toTopOf="@+id/swEnableBlink"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/svbarBlink"
+        app:layout_constraintTop_toBottomOf="@+id/valueBlink"
         app:tickVisible="true" />
 
     <androidx.appcompat.widget.SwitchCompat
@@ -76,7 +76,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.19"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/svbarBlink"
+        app:layout_constraintTop_toBottomOf="@+id/valueBlink"
         app:layout_constraintVertical_bias="0.3" />
 
 

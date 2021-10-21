@@ -11,9 +11,12 @@ import android.view.ViewGroup
 import androidx.core.content.edit
 import androidx.fragment.app.viewModels
 import com.grandfatherpikhto.ledstrip.databinding.FragmentColorBinding
+import com.grandfatherpikhto.ledstrip.helper.toHex
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.ui.model.LedstripViewModel
 import com.larswerkman.holocolorpicker.ColorPicker
+import com.larswerkman.holocolorpicker.ValueBar
+import kotlinx.coroutines.DelicateCoroutinesApi
 
 class ColorFragment : Fragment() {
     companion object {
@@ -37,6 +40,7 @@ class ColorFragment : Fragment() {
         Log.d(TAG, "onCreate()")
     }
 
+    @DelicateCoroutinesApi
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -64,17 +68,29 @@ class ColorFragment : Fragment() {
                 }
             })
 
-            pickerColor.addSVBar(svbarColor)
-
             ledstripViewModel.color.observe(viewLifecycleOwner, { color ->
                 if(pickerColor.color != color) {
                     pickerColor.color = color
                 }
             })
 
+            pickerColor.addValueBar(valueColor)
+            pickerColor.showOldCenterColor = true
+
             pickerColor.onColorChangedListener = ColorPicker.OnColorChangedListener { value ->
-                if( ledstripViewModel.color.value != value ) {
-                    ledstripViewModel.changeColor(value)
+                val color = valueColor.color
+                if(value == color) {
+                    if (ledstripViewModel.color.value != color) {
+                        ledstripViewModel.changeColor(color)
+                    }
+                } else {
+                    pickerColor.oldCenterColor = value
+                }
+            }
+
+            valueColor.onValueChangedListener = ValueBar.OnValueChangedListener { color ->
+                if (ledstripViewModel.color.value != color) {
+                    ledstripViewModel.changeColor(color)
                 }
             }
         }

@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 object BtLeServiceConnector:ServiceConnection {
-    const val TAG = "BtLeServiceConnector"
+    private const val TAG = "BtLeServiceConnector"
+    private const val START_COLOR = 0x200100
 
     private var btLeService:BtLeService ?= null
     val service:BtLeService? get() = btLeService
@@ -20,14 +21,14 @@ object BtLeServiceConnector:ServiceConnection {
     private var sharedBond = MutableStateFlow<Boolean>(false)
     val bond:StateFlow<Boolean> = sharedBond
 
-    private val sharedState = MutableStateFlow<BtLeService.State>(BtLeService.State.Disconnected)
+    private val sharedState = MutableStateFlow(BtLeService.State.Disconnected)
     val state:StateFlow<BtLeService.State> = sharedState
 
-    private val sharedRegime = MutableSharedFlow<BtLeService.Regime>(replay = BtLeService.SHARED_REGIME_BUFFER_SIZE)
-    val regime:SharedFlow<BtLeService.Regime> = sharedRegime
+    private val sharedRegime = MutableStateFlow(BtLeService.Regime.Off)
+    val regime:SharedFlow<BtLeService.Regime> = sharedRegime.asStateFlow()
 
-    private val sharedColor = MutableSharedFlow<Int>(replay = BtLeService.SHARED_COLOR_BUFFER_SIZE)
-    val color:SharedFlow<Int> = sharedColor
+    private val sharedColor = MutableStateFlow(START_COLOR)
+    val color:SharedFlow<Int> = sharedColor.asStateFlow()
 
     @DelicateCoroutinesApi
     @RequiresApi(Build.VERSION_CODES.M)
@@ -43,6 +44,7 @@ object BtLeServiceConnector:ServiceConnection {
         }
     }
 
+    @DelicateCoroutinesApi
     override fun onServiceDisconnected(p0: ComponentName?) {
         GlobalScope.launch {
             sharedBond.tryEmit(false)

@@ -28,6 +28,7 @@ import java.util.*
 class BtLeScanService: Service() {
     companion object {
         const val TAG:String = "BtLeScanService"
+        const val DEFAULT_DEVICE_NAME = "LED_STRIP"
         const val SCAN_PERIOD = 10000L
         const val SHARED_DEVICE_BUFFER = 0x10
     }
@@ -206,7 +207,9 @@ class BtLeScanService: Service() {
             .setScanMode(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
             .build()
 
-        val filters:MutableList<ScanFilter> = mutableListOf()
+        val filters:MutableList<ScanFilter> = mutableListOf(
+            // ScanFilter.Builder().setDeviceName(DEFAULT_DEVICE_NAME).build()
+        )
 
         Log.d(TAG, "Rescan with address $bluetoothAddress")
         if(address != applicationContext.getString(R.string.default_device_address)) {
