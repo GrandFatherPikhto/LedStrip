@@ -197,21 +197,6 @@ class BtLeScanService: Service() {
     }
 
     /**
-     * Запуск сканирования
-     */
-    @DelicateCoroutinesApi
-    private fun startScan() {
-        val scanSettings: ScanSettings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-            .build()
-
-        val filters:MutableList<ScanFilter> = mutableListOf()
-
-        bluetoothLeScanner.startScan(filters, scanSettings, leScanCallback)
-        sharedState.tryEmit(State.Scan)
-    }
-
-    /**
      * Запуск сканирования BLE-устройств
      * Фильтр по сервисам, пока не работает.
      */
@@ -234,6 +219,21 @@ class BtLeScanService: Service() {
         } else {
             startScan()
         }
+    }
+
+    /**
+     * Запуск сканирования
+     */
+    @DelicateCoroutinesApi
+    private fun startScan() {
+        val scanSettings: ScanSettings = ScanSettings.Builder()
+            .setScanMode(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+            .build()
+
+        val filters:MutableList<ScanFilter> = mutableListOf()
+        BtLeServiceConnector.service?.close()
+        bluetoothLeScanner.startScan(filters, scanSettings, leScanCallback)
+        sharedState.tryEmit(State.Scan)
     }
 
     /**

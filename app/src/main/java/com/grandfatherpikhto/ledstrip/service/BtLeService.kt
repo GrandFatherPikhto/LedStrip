@@ -495,7 +495,8 @@ class BtLeService:Service() {
                         // Log.d(TAG, "Пытаюсь сопрячь устройство ")
                         bluetoothDevice!!.createBond()
                     } else {
-                        doRescanDevice()
+                        // doRescanDevice()
+                        doConnect()
                     }
                 } else {
                     // Log.d(TAG, "Не могу получить удалённое устройство ${address.value}")
