@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.grandfatherpikhto.ledstrip.R
+import com.grandfatherpikhto.ledstrip.databinding.FragmentAllBinding
 
 /**
  * A simple [Fragment] subclass.
@@ -13,6 +14,8 @@ import com.grandfatherpikhto.ledstrip.R
  * create an instance of this fragment.
  */
 class AllFragment : Fragment() {
+    private var _binding: FragmentAllBinding?= null
+    private val binding: FragmentAllBinding get() = _binding!!
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
