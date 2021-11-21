@@ -243,14 +243,14 @@ class BtLeScanService: Service() {
     @DelicateCoroutinesApi
     fun stopScan() {
         Log.d(TAG, "stopScan() sharedState=${sharedState.value}")
-        if(sharedState.value == State.Scan) {
+        // if(sharedState.value == State.Scan) {
             bluetoothAddress = applicationContext.getString(R.string.default_device_address)
             bluetoothLeScanner.stopScan(leScanCallback)
             Log.d(TAG, "stopScan: Сканирование остановлено")
             GlobalScope.launch {
                 sharedState.tryEmit(State.Stop)
             }
-        }
+        // }
     }
 
     /**

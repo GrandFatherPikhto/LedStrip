@@ -50,24 +50,6 @@ class ColorFragment : Fragment() {
         sharedPreferences = requireContext().getSharedPreferences(NAME, Context.MODE_PRIVATE)
         _binding = FragmentColorBinding.inflate(inflater, container, false)
         binding.apply {
-            switchEnableColor.setOnCheckedChangeListener { _, enabled ->
-                if( enabled != ledstripViewModel.regime.value?.enabled ) {
-                    if (enabled) {
-                        ledstripViewModel.changeRegime(BtLeService.Regime.Color)
-                    } else {
-                        ledstripViewModel.changeRegime(BtLeService.Regime.Off)
-                    }
-                }
-            }
-
-            ledstripViewModel.regime.observe (viewLifecycleOwner, { value ->
-                if(value != null) {
-                    if(switchEnableColor.isChecked != value.enabled) {
-                        switchEnableColor.isChecked = value.enabled
-                    }
-                }
-            })
-
             ledstripViewModel.color.observe(viewLifecycleOwner, { color ->
                 if(pickerColor.color != color) {
                     pickerColor.color = color

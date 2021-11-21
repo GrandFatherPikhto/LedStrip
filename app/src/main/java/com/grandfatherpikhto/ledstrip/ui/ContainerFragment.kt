@@ -47,7 +47,7 @@ class ContainerFragment : Fragment() {
     ): View? {
         // return inflater.inflate(R.layout.container_fragment, container, false)
         val fragments = arrayListOf<Fragment>(
-            ColorFragment.newInstance(),
+            AllFragment.newInstance(),
             TagFragment.newInstance(),
             WaterFragment.newInstance(),
             TailFragment.newInstance(),

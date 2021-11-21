@@ -28,10 +28,9 @@
 
     <com.larswerkman.holocolorpicker.ValueBar
         android:id="@+id/valueColor"
-        android:layout_width="0dp"
+        android:layout_width="379dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/saturationColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -39,24 +38,13 @@
 
     <com.larswerkman.holocolorpicker.SaturationBar
         android:id="@+id/saturationColor"
-        android:layout_width="0dp"
+        android:layout_width="379dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/switchEnableColor"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/valueColor" />
-
-
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchEnableColor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/switchEnable"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/valueColor" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,69 +14,48 @@
         android:layout_height="wrap_content"
         android:text="@string/tvTitleTail"
         android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@+id/pickerTail"
+        app:layout_constraintBottom_toTopOf="@+id/fcTailColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.larswerkman.holocolorpicker.ColorPicker
-        android:id="@+id/pickerTail"
-        android:layout_width="wrap_content"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fcTailColor"
+        android:name="com.grandfatherpikhto.ledstrip.ui.control.ColorFragment"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/valueTail"
+        app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvTitleTail" />
 
-    <com.larswerkman.holocolorpicker.ValueBar
-        android:id="@+id/valueTail"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/saturationTail"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pickerTail" />
-
-    <com.larswerkman.holocolorpicker.SaturationBar
-        android:id="@+id/saturationTail"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/valueTail" />
-
     <com.google.android.material.slider.Slider
         android:id="@+id/slTailWidth"
-        android:layout_width="0dp"
+        android:layout_width="310dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
         android:contentDescription="@string/tvTailLen"
+        android:orientation="horizontal"
         android:value="25"
         android:valueFrom="5"
         android:valueTo="100"
         app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/saturationTail" />
+        app:layout_constraintTop_toBottomOf="@+id/fcTailColor" />
 
     <com.google.android.material.slider.Slider
         android:id="@+id/slTailSpeed"
-        android:layout_width="0dp"
+        android:layout_width="310dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
         android:contentDescription="@string/tvTailLen"
         android:value="50"
         android:valueFrom="10"
         android:valueTo="100"
         app:layout_constraintBottom_toTopOf="@+id/swEnableTail"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/slTailWidth" />
 
@@ -87,6 +66,7 @@
         android:text="@string/switchEnable"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/slTailSpeed" />
 

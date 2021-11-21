@@ -6,11 +6,21 @@
     android:layout_height="match_parent"
     tools:context=".ui.control.TailFragment">
 
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fcViewTailColor"
+        android:name="com.grandfatherpikhto.ledstrip.ui.control.ColorFragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/constraintLayout4"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout4"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/pickerTail">
+        app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
             android:id="@+id/tvTitleTail"
@@ -18,36 +28,14 @@
             android:layout_height="wrap_content"
             android:text="@string/tvTitleTail"
             android:textSize="34sp"
-            app:layout_constraintBottom_toTopOf="@+id/valueTail"
+            app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.larswerkman.holocolorpicker.ValueBar
-            android:id="@+id/valueTail"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintBottom_toTopOf="@+id/saturationTail"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvTitleTail" />
-
-        <com.larswerkman.holocolorpicker.SaturationBar
-            android:id="@+id/saturationTail"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintBottom_toTopOf="@+id/slTailSpeed"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/valueTail" />
-
         <com.google.android.material.slider.Slider
             android:id="@+id/slTailSpeed"
-            android:layout_width="0dp"
+            android:layout_width="447dp"
             android:layout_height="wrap_content"
             android:contentDescription="@string/tvTailLen"
             android:value="50"
@@ -56,11 +44,11 @@
             app:layout_constraintBottom_toTopOf="@+id/slTailWidth"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/saturationTail" />
+            app:layout_constraintTop_toBottomOf="@+id/tvTitleTail" />
 
         <com.google.android.material.slider.Slider
             android:id="@+id/slTailWidth"
-            android:layout_width="0dp"
+            android:layout_width="447dp"
             android:layout_height="wrap_content"
             android:contentDescription="@string/tvTailLen"
             android:value="25"
@@ -82,13 +70,5 @@
             app:layout_constraintTop_toBottomOf="@+id/slTailWidth" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <com.larswerkman.holocolorpicker.ColorPicker
-        android:id="@+id/pickerTail"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

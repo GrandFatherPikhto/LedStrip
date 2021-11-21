@@ -13,8 +13,6 @@ import androidx.fragment.app.viewModels
 import com.grandfatherpikhto.ledstrip.databinding.FragmentTailBinding
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.ui.model.LedstripViewModel
-import com.larswerkman.holocolorpicker.ColorPicker
-import com.larswerkman.holocolorpicker.ValueBar
 
 class TailFragment : Fragment() {
     companion object {
@@ -58,21 +56,6 @@ class TailFragment : Fragment() {
                     }
                 }
             })
-
-            pickerTail.addValueBar(valueTail)
-            pickerTail.addSaturationBar(saturationTail)
-            var i = 0
-            pickerTail.onColorChangedListener = ColorPicker.OnColorChangedListener { value ->
-                if (i == 3) {
-                    if( ledstripViewModel.color.value != value ) {
-                        ledstripViewModel.changeColor(value)
-                    }
-                    i = 0
-                } else {
-                    pickerTail.oldCenterColor = value
-                    i ++
-                }
-            }
 
             slTailSpeed.addOnChangeListener { _, value, fromUser ->
                 if(fromUser) {
