@@ -2,33 +2,31 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/frameLayout"
+    android:id="@+id/csLedstrip"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.control.AllFragment">
-
+    tools:context=".ui.LedstripFragment">
 
     <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/fragmentContainerView"
-        android:name="com.grandfatherpikhto.ledstrip.ui.control.ColorFragment"
+        android:id="@+id/ledstrip_container"
+        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/swEnableAll"
+        app:layout_constraintBottom_toTopOf="@+id/bnLedstrip"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.45"
+        app:navGraph="@navigation/nav_ledstrip" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/swEnableAll"
-        android:layout_width="wrap_content"
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bnLedstrip"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="48dp"
-        android:text="@string/switchEnable"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/fragmentContainerView" />
+        app:layout_constraintTop_toBottomOf="@+id/ledstrip_container"
+        app:menu="@menu/menu_bottom_ledstrip_navigation" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

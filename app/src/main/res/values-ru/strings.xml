@@ -38,4 +38,8 @@
     <string name="tvTailLen">Длина</string>
     <string name="led_strip_preferences">Светодиодная лента</string>
     <string name="preference_ledstrip_length">Длина</string>
+    <string name="fragment_ledstrip">Светодиодная лента</string>
+    <string name="action_devices">Устройства</string>
+    <string name="action_regimes">Режимы</string>
+    <string name="action_pages">Страницы</string>
 </resources>

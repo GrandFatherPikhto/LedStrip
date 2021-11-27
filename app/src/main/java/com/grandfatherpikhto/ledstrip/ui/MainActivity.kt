@@ -17,54 +17,42 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
+import androidx.core.content.edit
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
+import androidx.preference.PreferenceManager
 import com.grandfatherpikhto.ledstrip.LedstripApplication
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.ActivityMainBinding
 import com.grandfatherpikhto.ledstrip.helper.AppConst
+import com.grandfatherpikhto.ledstrip.model.MainActivityModel
 import com.grandfatherpikhto.ledstrip.service.*
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@RequiresApi(Build.VERSION_CODES.M)
+@InternalCoroutinesApi
+@DelicateCoroutinesApi
 class MainActivity : AppCompatActivity() {
     companion object {
         const val TAG = "MainActivity"
     }
 
+    enum class Current(val value : Int) {
+        Devices(R.id.devicesFragment),
+        Ledstrip(R.id.ledstripFragment),
+        Settings(R.id.settingsFragment)
+    }
+
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-    private lateinit var navController: NavController
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var deviceAddress: String
-    private lateinit var deviceName: String
-    private var currentFragment:Fragments = Fragments.Splash
-    private var currentState:State = State.Connect
-
-    enum class Fragments(val value: Int) {
-        Scan(R.id.ScanFragment),
-        Splash(R.id.SplashFragment),
-        Container(R.id.ContainerFragment),
-        Settings(R.id.SettingsFragment);
-
-        fun isScan():Boolean {
-            return this.value == Scan.value
-        }
-
-        fun isSplah():Boolean {
-            return this.value == Splash.value
-        }
-
-        fun isContainer():Boolean {
-            return this.value == Container.value
-        }
-
-        fun isSettings():Boolean {
-            return this.value == Settings.value
-        }
+    private val mainActivityModel: MainActivityModel by viewModels<MainActivityModel>()
+    private val preferences:SharedPreferences by lazy {
+        PreferenceManager.getDefaultSharedPreferences (applicationContext)
     }
 
     enum class State(val value: Int) {
@@ -77,27 +65,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate()")
 
-        sharedPreferences = getSharedPreferences(AppConst.PREFERENCES, Context.MODE_PRIVATE).apply {
-            deviceAddress = getString(
-                AppConst.DEVICE_ADDRESS,
-                getString(R.string.default_device_address)
-            ).toString()
-            deviceName =
-                getString(AppConst.DEVICE_NAME, getString(R.string.default_device_name)).toString()
-        }
-//        deviceAddress = getString(R.string.default_device_address)
-//        sharedPreferences.edit {
-//            putString(AppConst.DEVICE_ADDRESS, deviceAddress)
-//        }
+        loadPreferences()
+
+        mainActivityModel.fragment.observe(this, { current ->
+            Log.d(TAG, "Current: $current")
+            doNavigate(current)
+        })
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         setSupportActionBar(binding.toolbar)
-
-        navController = findNavController(R.id.nav_host_fragment_content_main)
-        appBarConfiguration = AppBarConfiguration(navController.graph)
-        setupActionBarWithNavController(navController, appBarConfiguration)
+        bindNavBar()
 
         requestPermissions(
             mutableListOf(
@@ -107,6 +85,11 @@ class MainActivity : AppCompatActivity() {
             )
         )
         doBindServices()
+
+        if(preferences.getString(AppConst.DEVICE_ADDRESS, getString(R.string.default_device_address))
+            == getString(R.string.default_device_address)) {
+            mainActivityModel.changeFragment(Current.Devices)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -120,12 +103,12 @@ class MainActivity : AppCompatActivity() {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.itemDevicesList -> {
-                doScan()
+            R.id.action_devices -> {
+                mainActivityModel.changeFragment(Current.Devices)
                 true
             }
             R.id.action_settings -> {
-                doSettings()
+                mainActivityModel.changeFragment(Current.Settings)
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -138,13 +121,10 @@ class MainActivity : AppCompatActivity() {
                 || super.onSupportNavigateUp()
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "onStart()")
-        readPreferences()
         doBindServices()
-        bindNavigate()
     }
 
     override fun onStop() {
@@ -223,64 +203,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun navigateFragment(fragment: Fragments) {
-        if(navController.currentDestination?.id != fragment.value) {
-            navController.navigate(fragment.value)
-            currentFragment = fragment
-        }
-    }
-
-    @DelicateCoroutinesApi
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun bindNavigate() {
-        lifecycleScope.launch {
-            BtLeServiceConnector.bond.collect { bond ->
-                if (bond) {
-                    BtLeServiceConnector.state.collect { state ->
-                        readPreferences()
-                        Log.d(TAG, "State: $state $deviceAddress")
-                        doNavigate(state, BtLeServiceConnector.service!!)
-                    }
-                }
-            }
-        }
-    }
-
-
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun doNavigate(state:BtLeService.State, service:BtLeService) {
-        when(state) {
-            BtLeService.State.Disconnected -> {
-                when(currentState) {
-                    State.Connect -> {
-                        readPreferences()
-                        service?.connect(deviceAddress)
-                        navigateFragment(Fragments.Splash)
-                    }
-                    State.Scan -> {
-                        service?.close()
-                        navigateFragment(Fragments.Scan)
-                    }
-                    State.Settings -> {
-                        service?.close()
-                        navigateFragment(Fragments.Settings)
-                    }
-                }
-            }
-            BtLeService.State.Connecting -> {
-                currentState = State.Connect
-                navigateFragment(Fragments.Splash)
-            }
-            BtLeService.State.Discovered -> {
-                navigateFragment(Fragments.Container)
-            }
-            BtLeService.State.RequestScan -> {
-                currentState = State.Scan
-                navigateFragment(Fragments.Scan)
-            }
-            else -> {
-
-            }
+    private fun doNavigate(current: Current) {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
+        val navController = navHostFragment?.findNavController()
+        if(navController.currentDestination?.id != current.value) {
+            navController.navigate(current.value)
         }
     }
 
@@ -302,22 +229,29 @@ class MainActivity : AppCompatActivity() {
         unbindService(BtLeScanServiceConnector)
     }
 
-    private fun doScan() {
-        currentState = State.Scan
-        BtLeServiceConnector.close()
-        deviceAddress = getString(R.string.default_device_address)
-        navigateFragment(Fragments.Scan)
+    private fun bindNavBar() {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
+        val navController = navHostFragment?.findNavController()
+        if(navController != null) {
+            appBarConfiguration = AppBarConfiguration(navController.graph)
+            setupActionBarWithNavController(navController, appBarConfiguration)
+        }
     }
 
-    private fun doSettings() {
-        currentState = State.Settings
-        BtLeServiceConnector.close()
-        navigateFragment(Fragments.Settings)
+    private fun loadPreferences() {
+        Log.d(TAG, "loadPreferences:")
+        preferences.apply {
+            mainActivityModel.changeAddress(getString(AppConst.DEVICE_ADDRESS,
+                getString(R.string.default_device_address)).toString())
+            mainActivityModel.changeName(getString(AppConst.DEFAULT_NAME,
+                getString(R.string.default_device_name)).toString())
+        }
     }
 
-    private fun readPreferences() {
-        sharedPreferences.apply {
-            deviceAddress = getString(AppConst.DEVICE_ADDRESS, getString(R.string.default_device_address)).toString()
+    private fun savePreferences() {
+        preferences.edit {
+            putString(AppConst.DEVICE_ADDRESS, mainActivityModel.address.value)
+            putString(AppConst.DEFAULT_NAME, mainActivityModel.name.value)
         }
     }
 }

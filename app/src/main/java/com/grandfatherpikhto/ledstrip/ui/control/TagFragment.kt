@@ -2,18 +2,25 @@ package com.grandfatherpikhto.ledstrip.ui.control
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.RequiresApi
 import androidx.core.content.edit
 import androidx.fragment.app.viewModels
 import com.grandfatherpikhto.ledstrip.databinding.FragmentTagBinding
-import com.grandfatherpikhto.ledstrip.service.BtLeService
-import com.grandfatherpikhto.ledstrip.ui.model.LedstripViewModel
+import com.grandfatherpikhto.ledstrip.model.Regime
+import com.grandfatherpikhto.ledstrip.model.LedstripViewModel
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@RequiresApi(Build.VERSION_CODES.M)
+@DelicateCoroutinesApi
+@InternalCoroutinesApi
 class TagFragment : Fragment() {
     companion object {
         const val TAG = "TagFragment"
@@ -43,9 +50,9 @@ class TagFragment : Fragment() {
             swEnableTag.setOnCheckedChangeListener { _, enabled ->
                 if( enabled != ledstripViewModel.regime.value?.enabled ) {
                     if (enabled) {
-                        ledstripViewModel.changeRegime(BtLeService.Regime.Tag)
+                        ledstripViewModel.changeRegime(Regime.Tag)
                     } else {
-                        ledstripViewModel.changeRegime(BtLeService.Regime.Off)
+                        ledstripViewModel.changeRegime(Regime.Off)
                     }
                 }
             }
@@ -93,7 +100,7 @@ class TagFragment : Fragment() {
         super.onResume()
         Log.d(TAG, "onResume()")
         sharedPreferences.apply {
-            BtLeService.Regime.getByValue(getInt(REGIME, BtLeService.Regime.Off.value))?.let { regime ->
+            Regime.getByValue(getInt(REGIME, Regime.Off.value))?.let { regime ->
                 Log.d(TAG, "onResume() regime: $regime")
                 ledstripViewModel.changeRegime(regime)
             }

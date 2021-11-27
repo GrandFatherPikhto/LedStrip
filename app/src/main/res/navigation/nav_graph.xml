@@ -3,67 +3,42 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/SplashFragment">
+    app:startDestination="@id/ledstripFragment">
 
     <fragment
-        android:id="@+id/SplashFragment"
-        android:name="com.grandfatherpikhto.ledstrip.ui.SplashFragment"
-        android:label="@string/splash_fragment_label"
-        tools:layout="@layout/fragment_splash">
-
-        <action
-            android:id="@+id/action_SplashFragment_to_ScanFragment"
-            app:destination="@id/ScanFragment" />
-        <action
-            android:id="@+id/action_SplashFragment_to_ContainerFragment"
-            app:destination="@id/ContainerFragment" />
-        <action
-            android:id="@+id/action_SplashFragment_to_SettingsFragment"
-            app:destination="@id/SettingsFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/ScanFragment"
-        android:name="com.grandfatherpikhto.ledstrip.ui.ScanFragment"
+        android:id="@+id/devicesFragment"
+        android:name="com.grandfatherpikhto.ledstrip.ui.DevicesFragment"
         android:label="@string/scan_fragment_label"
-        tools:layout="@layout/fragment_scan">
+        tools:layout="@layout/fragment_devices">
 
         <action
-            android:id="@+id/action_ScanFragment_to_SplashFragment"
-            app:destination="@id/SplashFragment" />
+            android:id="@+id/action_devicesFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
         <action
-            android:id="@+id/action_ScanFragment_to_ContainerFragment"
-            app:destination="@id/ContainerFragment" />
-        <action
-            android:id="@+id/action_ScanFragment_to_SettingsFragment"
-            app:destination="@id/SettingsFragment" />
+            android:id="@+id/action_devicesFragment_to_ledstripFragment"
+            app:destination="@id/ledstripFragment" />
     </fragment>
     <fragment
-        android:id="@+id/ContainerFragment"
-        android:name="com.grandfatherpikhto.ledstrip.ui.ContainerFragment"
-        android:label="@string/container_fragment_label"
-        tools:layout="@layout/fragment_container" >
-        <action
-            android:id="@+id/action_ContainerFragment_to_ScanFragment"
-            app:destination="@id/ScanFragment" />
-        <action
-            android:id="@+id/action_ContainerFragment_to_SplashFragment"
-            app:destination="@id/SplashFragment" />
-        <action
-            android:id="@+id/action_ContainerFragment_to_SettingsFragment"
-            app:destination="@id/SettingsFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/SettingsFragment"
+        android:id="@+id/settingsFragment"
         android:name="com.grandfatherpikhto.ledstrip.ui.SettingsFragment"
-        android:label="@string/settings_fragment_label" >
+        android:label="@string/settings_fragment_label">
         <action
-            android:id="@+id/action_SettingsFragment_to_ContainerFragment"
-            app:destination="@id/ContainerFragment" />
+            android:id="@+id/action_settingsFragment_to_scanFragment"
+            app:destination="@id/devicesFragment" />
         <action
-            android:id="@+id/action_SettingsFragment_to_ScanFragment"
-            app:destination="@id/ScanFragment" />
+            android:id="@+id/action_settingsFragment_to_ledstripFragment"
+            app:destination="@id/ledstripFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/ledstripFragment"
+        android:name="com.grandfatherpikhto.ledstrip.ui.LedstripFragment"
+        android:label="@string/fragment_ledstrip"
+        tools:layout="@layout/fragment_ledstrip">
         <action
-            android:id="@+id/action_SettingsFragment_to_SplashFragment"
-            app:destination="@id/SplashFragment" />
+            android:id="@+id/action_ledstripFragment_to_devicesFragment"
+            app:destination="@id/devicesFragment" />
+        <action
+            android:id="@+id/action_ledstripFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
     </fragment>
 </navigation>

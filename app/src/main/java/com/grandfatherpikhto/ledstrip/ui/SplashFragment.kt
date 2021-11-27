@@ -1,30 +1,24 @@
 package com.grandfatherpikhto.ledstrip.ui
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.findNavController
-import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.databinding.FragmentSplashBinding
-import com.grandfatherpikhto.ledstrip.helper.AppConst
-import com.grandfatherpikhto.ledstrip.service.BtLeScanService
-import com.grandfatherpikhto.ledstrip.service.BtLeService
-import com.grandfatherpikhto.ledstrip.service.BtLeServiceConnector
-import com.grandfatherpikhto.ledstrip.ui.model.SplashViewModel
+import com.grandfatherpikhto.ledstrip.model.SplashViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
  */
+@RequiresApi(Build.VERSION_CODES.M)
 @DelicateCoroutinesApi
+@InternalCoroutinesApi
 class SplashFragment : Fragment() {
     companion object {
         const val TAG = "SplashFragment"

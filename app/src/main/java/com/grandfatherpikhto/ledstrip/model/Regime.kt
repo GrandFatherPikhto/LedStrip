@@ -1,6 +1,4 @@
-package com.grandfatherpikhto.ledstrip.helper
-
-import com.grandfatherpikhto.ledstrip.service.BtLeService
+package com.grandfatherpikhto.ledstrip.model
 
 enum class Regime(val value: Int) {
     Off(0x00),

@@ -1,15 +1,20 @@
-package com.grandfatherpikhto.ledstrip.ui.model
+package com.grandfatherpikhto.ledstrip.model
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grandfatherpikhto.ledstrip.service.BtLeService
 import com.grandfatherpikhto.ledstrip.service.BtLeServiceConnector
+import com.grandfatherpikhto.ledstrip.ui.LedstripFragment
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
 
+@DelicateCoroutinesApi
+@InternalCoroutinesApi
 class LedstripViewModel:ViewModel() {
     companion object {
         const val TAG = "LedstripViewModel"
@@ -22,9 +27,12 @@ class LedstripViewModel:ViewModel() {
 
     private val sharedState = MutableLiveData<BtLeService.State> ()
     val state:LiveData<BtLeService.State>
-        get() = sharedState as LiveData<BtLeService.State>
+        get() = sharedState
 
-    private val sharedRegime = MutableLiveData<BtLeService.Regime> ()
+    private val sharedFragment = MutableLiveData<LedstripFragment.Current>(LedstripFragment.Current.Regime)
+    val fragment: LiveData<LedstripFragment.Current> get() = sharedFragment
+
+    private val sharedRegime = MutableLiveData<Regime> ()
     val regime
         get() = sharedRegime
     private val sharedColor = MutableLiveData<Int> ()
@@ -52,6 +60,7 @@ class LedstripViewModel:ViewModel() {
         }
         viewModelScope.launch {
             BtLeServiceConnector.state.collect { value ->
+                Log.d(TAG, "State: $value")
                 sharedState.postValue(value)
             }
         }
@@ -68,7 +77,7 @@ class LedstripViewModel:ViewModel() {
     }
 
     @DelicateCoroutinesApi
-    fun changeRegime(value:BtLeService.Regime) {
+    fun changeRegime(value: Regime) {
         sharedRegime.value = value
         service?.writeRegime(value)
     }
@@ -97,5 +106,9 @@ class LedstripViewModel:ViewModel() {
     fun changeBrightness(value:Float) {
         sharedBrightness.value = value
         service?.writeBrightness(value)
+    }
+
+    fun changeFragment(value: LedstripFragment.Current) {
+        sharedFragment.postValue(value)
     }
 }

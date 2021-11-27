@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_ledstrip"
+    app:startDestination="@id/regimeFragment">
+
+    <fragment
+        android:id="@+id/regimeFragment"
+        android:name="com.grandfatherpikhto.ledstrip.ui.RegimeFragment"
+        android:label="fragment_regime"
+        tools:layout="@layout/fragment_regime" >
+        <action
+            android:id="@+id/action_regimeFragment_to_pagesFragment"
+            app:destination="@id/pagesFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/pagesFragment"
+        android:name="com.grandfatherpikhto.ledstrip.ui.PagesFragment"
+        android:label="fragment_pages"
+        tools:layout="@layout/fragment_pages" >
+        <action
+            android:id="@+id/action_pagesFragment_to_regimeFragment"
+            app:destination="@id/regimeFragment" />
+        <action
+            android:id="@+id/action_pagesFragment_to_regimeFragment2"
+            app:destination="@id/regimeFragment" />
+        <action
+            android:id="@+id/action_pagesFragment_to_splashFragment"
+            app:destination="@id/splashFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.grandfatherpikhto.ledstrip.ui.SplashFragment"
+        android:label="fragment_splash"
+        tools:layout="@layout/fragment_splash" >
+        <action
+            android:id="@+id/action_splashFragment_to_regimeFragment"
+            app:destination="@id/regimeFragment" />
+        <action
+            android:id="@+id/action_splashFragment_to_pagesFragment"
+            app:destination="@id/pagesFragment" />
+    </fragment>
+</navigation>

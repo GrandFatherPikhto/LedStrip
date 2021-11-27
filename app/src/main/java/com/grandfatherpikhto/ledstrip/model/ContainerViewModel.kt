@@ -1,4 +1,4 @@
-package com.grandfatherpikhto.ledstrip.ui.model
+package com.grandfatherpikhto.ledstrip.model
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

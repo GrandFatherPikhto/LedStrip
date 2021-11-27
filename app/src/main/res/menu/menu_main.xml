@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.grandfatherpikhto.ledstrip.ui.MainActivity">
     <item
-        android:id="@+id/itemDevicesList"
+        android:id="@+id/action_devices"
         android:title="@string/itemDevicesList" />
     <item
         android:id="@+id/action_settings"

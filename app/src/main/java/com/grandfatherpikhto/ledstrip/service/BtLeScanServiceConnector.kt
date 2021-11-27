@@ -6,11 +6,9 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.*
 import android.content.*
-import android.os.Binder
-import android.os.Handler
-import android.os.IBinder
-import android.os.Looper
+import android.os.*
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.MutableLiveData
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.helper.AppConst
@@ -20,6 +18,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 
+@RequiresApi(Build.VERSION_CODES.M)
+@DelicateCoroutinesApi
+@InternalCoroutinesApi
 object BtLeScanServiceConnector:ServiceConnection {
     const val TAG = "ScannerConnector"
 
@@ -41,9 +42,6 @@ object BtLeScanServiceConnector:ServiceConnection {
     val state = sharedState
 
 
-    @DelicateCoroutinesApi
-    @ExperimentalCoroutinesApi
-    @InternalCoroutinesApi
     override fun onServiceConnected(componentName: ComponentName?, binderService: IBinder?) {
         btLeScanService = (binderService as BtLeScanService.LocalBinder).getService()
         isBound.tryEmit(true)

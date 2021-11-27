@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.preference.PreferenceManager
 import com.grandfatherpikhto.ledstrip.R
+import com.grandfatherpikhto.ledstrip.model.Regime
 import com.grandfatherpikhto.ledstrip.helper.toByteArray
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -19,6 +20,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import java.util.*
 
+@RequiresApi(Build.VERSION_CODES.M)
+@DelicateCoroutinesApi
+@InternalCoroutinesApi
 class BtLeService:Service() {
     companion object {
         const val TAG = "BtLeService"
@@ -73,28 +77,6 @@ class BtLeService:Service() {
         NotPaired(0x00),
         PairingRequest(0x01),
         Paired(0x02)
-    }
-
-    enum class Regime constructor(val value:Int) {
-        Off(0x00),
-        Color(0x01),
-        Tag(0x02),
-        Water(0x03),
-        Tail(0x04),
-        Blink(0x05);
-
-        val enabled:Boolean get() {
-            if(this == Off) {
-                return false
-            }
-
-            return true
-        }
-
-        companion object {
-            private val VALUES = values()
-            fun getByValue(value: Int) = VALUES.firstOrNull { it.value == value }
-        }
     }
 
     private lateinit var settings:SharedPreferences
@@ -342,7 +324,6 @@ class BtLeService:Service() {
      * Создание сервиса. Первичная инициализация
      */
     @RequiresApi(Build.VERSION_CODES.M)
-    @DelicateCoroutinesApi
     override fun onCreate() {
         super.onCreate()
         if(charWriteMutex.isLocked) charWriteMutex.unlock()
@@ -459,7 +440,6 @@ class BtLeService:Service() {
         fun getService(): BtLeService = this@BtLeService
     }
 
-    @DelicateCoroutinesApi
     override fun onBind(p0: Intent?): IBinder? {
         // Log.d(TAG, "Сервис связан")
         sharedState.tryEmit(State.Disconnected)
@@ -552,7 +532,7 @@ class BtLeService:Service() {
     @RequiresApi(Build.VERSION_CODES.M)
     @DelicateCoroutinesApi
     fun doRescanDevice() {
-        BtLeScanServiceConnector.service?.scanLeDevices(bluetoothAddress)
+        // BtLeScanServiceConnector.service?.scanLeDevices(address = bluetoothAddress)
     }
 
     /**
@@ -573,8 +553,8 @@ class BtLeService:Service() {
     }
 
     @DelicateCoroutinesApi
-    fun writeRegime(regime:Regime) {
-        // Log.d(TAG, "Меняем режим $regime ${charWriteMutex.isLocked}")
+    fun writeRegime(regime: Regime) {
+        Log.d(TAG, "Меняем режим $regime ${charWriteMutex.isLocked}")
         GlobalScope.launch {
             regimeChannel.send(regime)
         }

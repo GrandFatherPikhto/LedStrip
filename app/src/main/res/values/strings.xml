@@ -47,5 +47,9 @@
     <string name="tvTailLen">Length</string>
     <string name="led_strip_preferences">Ledstrip</string>
     <string name="preference_ledstrip_length">Ledstrip Length</string>
+    <string name="fragment_ledstrip">Ledstrip</string>
+    <string name="action_devices">Devices</string>
+    <string name="action_regimes">Regimes</string>
+    <string name="action_pages">Pages</string>
     <!-- TODO: Remove or change this placeholder text -->
 </resources>

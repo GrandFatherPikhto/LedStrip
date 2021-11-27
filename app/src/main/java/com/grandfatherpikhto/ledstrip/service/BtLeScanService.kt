@@ -9,20 +9,24 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import com.grandfatherpikhto.ledstrip.R
 import com.grandfatherpikhto.ledstrip.helper.AppConst
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import java.util.*
 
+@RequiresApi(Build.VERSION_CODES.M)
+@DelicateCoroutinesApi
+@InternalCoroutinesApi
 class BtLeScanService: Service() {
+    /** */
     companion object {
         const val TAG:String = "BtLeScanService"
         const val DEFAULT_DEVICE_NAME = "LED_STRIP"
@@ -30,6 +34,7 @@ class BtLeScanService: Service() {
         const val SHARED_DEVICE_BUFFER = 0x10
     }
 
+    /** */
     enum class State(val value:Int) {
         Stop(0x02),
         Scan(0x01);
@@ -55,8 +60,11 @@ class BtLeScanService: Service() {
     val state:StateFlow<State> = sharedState
     /** */
     private val sharedDevice = MutableStateFlow<BtLeDevice?>(null)
+    /** */
     val device: StateFlow<BtLeDevice?> = sharedDevice
-
+    /** */
+    private lateinit var settings:SharedPreferences
+    /** */
     private val sharedAddressDevice = MutableStateFlow<BtLeDevice?>(null)
     val addressDevice: StateFlow<BtLeDevice?> = sharedAddressDevice
 
@@ -76,24 +84,14 @@ class BtLeScanService: Service() {
          * о том, что найдено устройство
          */
         fun addBtDevice(bluetoothDevice: BluetoothDevice) {
-            Log.d(TAG, "Filters: address: $bluetoothAddress, $bluetoothName")
-            if(!isDefaultAddress()) {
-                if(bluetoothAddress == bluetoothDevice.address) {
-                    Log.d(TAG, "Найдено устройство, соответствующее фильтру $bluetoothAddress")
-                    sharedDevice.tryEmit(bluetoothDevice.toBtLeDevice())
-                    sharedAddressDevice.tryEmit(bluetoothDevice.toBtLeDevice())
+            Log.d(TAG, "addBtDevice ${bluetoothDevice.name?.trim()}")
+            if(bluetoothDevice.name?.trim() == "LED_STRIP") {
+                Log.d(TAG, "Filters: address: $bluetoothAddress, ${bluetoothDevice.address}, $bluetoothName")
+                sharedDevice.tryEmit(bluetoothDevice.toBtLeDevice())
+                if(bluetoothDevice.address != applicationContext.getString(R.string.default_device_address)
+                    && bluetoothAddress == bluetoothDevice.address) {
                     stopScan()
                 }
-
-                saveDevice(bluetoothDevice.toBtLeDevice())
-            } else if(!isDefaultName()) {
-                Log.d(TAG, "Фильтруем по имени $bluetoothName")
-                if(bluetoothDevice.name == bluetoothName){
-                    Log.d(TAG, "Найдено устройство, соответствующее названию $bluetoothName")
-                    sharedDevice.tryEmit(bluetoothDevice.toBtLeDevice())
-                }
-            } else {
-                sharedDevice.tryEmit(bluetoothDevice.toBtLeDevice())
             }
         }
 
@@ -113,7 +111,7 @@ class BtLeScanService: Service() {
         override fun onBatchScanResults(results: MutableList<ScanResult>?) {
             super.onBatchScanResults(results)
             results?.forEach { result ->
-                Log.d(tag, "[BatchScan] Найдено устройство: ${result.device.address} ${result.device.name}")
+                // Log.d(tag, "[BatchScan] Найдено устройство: ${result.device.address} ${result.device.name}")
                 addBtDevice(result.device)
             }
         }
@@ -171,6 +169,11 @@ class BtLeScanService: Service() {
         bluetoothAddress = applicationContext.getString(R.string.default_device_address)
         bluetoothName    = applicationContext.getString(R.string.default_device_name)
 
+        PreferenceManager.getDefaultSharedPreferences(applicationContext).let {
+            settings = it
+            bluetoothName = settings.getString(AppConst.LED_STRIP_DEVICE_NAME, "LED_STRIP").toString()
+        }
+
         GlobalScope.launch {
             BtLeServiceConnector.bond.collect { bond ->
                 if(bond) {
@@ -202,11 +205,9 @@ class BtLeScanService: Service() {
      */
     @DelicateCoroutinesApi
     fun scanLeDevices(address:String = applicationContext.getString(R.string.default_device_address),
-              name:String = applicationContext.getString(R.string.default_device_name)) {
+                      name:String = applicationContext.getString(R.string.default_device_name)) {
         Log.d(TAG, "scanLeDevices $address, $name")
-        if(address != applicationContext.getString(R.string.default_device_address)) {
-            bluetoothAddress = address
-        }
+        bluetoothAddress = address
 
         if(name != applicationContext.getString(R.string.default_device_name)) {
             bluetoothName = name
@@ -244,12 +245,12 @@ class BtLeScanService: Service() {
     fun stopScan() {
         Log.d(TAG, "stopScan() sharedState=${sharedState.value}")
         // if(sharedState.value == State.Scan) {
-            bluetoothAddress = applicationContext.getString(R.string.default_device_address)
-            bluetoothLeScanner.stopScan(leScanCallback)
-            Log.d(TAG, "stopScan: Сканирование остановлено")
-            GlobalScope.launch {
-                sharedState.tryEmit(State.Stop)
-            }
+        // bluetoothAddress = applicationContext.getString(R.string.default_device_address)
+        bluetoothLeScanner.stopScan(leScanCallback)
+        Log.d(TAG, "stopScan: Сканирование остановлено")
+        GlobalScope.launch {
+            sharedState.tryEmit(State.Stop)
+        }
         // }
     }
 
@@ -315,6 +316,6 @@ class BtLeScanService: Service() {
     }
 
     fun isDefaultName():Boolean {
-        return bluetoothName == applicationContext.getString(R.string.default_device_name)
+        return bluetoothName == settings.getString(AppConst.LED_STRIP_DEVICE_NAME, "LED_STRIP")
     }
 }
